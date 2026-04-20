@@ -106,6 +106,8 @@ async function seed() {
       { key: 'max_withdrawal_amount', value: 500000, category: 'withdrawal', description: 'Maximum withdrawal INR' },
       { key: 'tds_percentage', value: 30, category: 'withdrawal', description: 'TDS percentage' },
       { key: 'processing_fee', value: 10, category: 'withdrawal', description: 'Processing fee INR' },
+      { key: 'referral_signup_bonus_referrer', value: 1000, category: 'referral', description: 'Signup bonus for referrer (INR)' },
+      { key: 'referral_signup_bonus_user', value: 500, category: 'referral', description: 'Signup bonus for new user (INR)' },
     ];
 
     for (const config of defaultConfigs) {
