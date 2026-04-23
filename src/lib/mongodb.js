@@ -14,10 +14,6 @@ if (process.env.USE_GOOGLE_DNS === 'true') {
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable');
-}
-
 /**
  * Manually resolves a mongodb+srv URI to a standard mongodb:// URI
  * This bypasses issues where the driver's native SRV resolver fails but manual DNS works.
@@ -64,6 +60,10 @@ if (!cached) {
 }
 
 async function connectDB() {
+    if (!MONGODB_URI) {
+        throw new Error('Please define the MONGODB_URI environment variable in .env.local');
+    }
+
     if (cached.conn) {
         return cached.conn;
     }
