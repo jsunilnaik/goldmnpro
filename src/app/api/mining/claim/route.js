@@ -73,7 +73,7 @@ export async function POST(request) {
     const investment = (subscription.amountPaid || subscription.plan.price);
     const totalPotential = investment * 2;
     const duration = subscription.plan.duration || 30;
-    const expectedSessions = subscription.totalSessionsExpected || duration;
+    const expectedSessions = subscription.totalSessionsExpected || subscription.plan.dailySessionLimit || duration;
     
     // Tiered Duration Logic
     const planName = (subscription.plan.name || 'Bronze').toLowerCase();

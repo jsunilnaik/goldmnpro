@@ -5,3 +5,5 @@ graphify-out
 .gemini
 .gitignore
 .graphifyignore
+.env.local
+.env.example

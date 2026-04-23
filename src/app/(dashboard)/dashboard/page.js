@@ -211,15 +211,15 @@ export default function DashboardPage() {
 
 
             {/* Sessions Progress */}
-            <div className="mb-4 p-3 bg-slate-50 border border-dark-100/10 rounded-2xl flex justify-between items-center shadow-sm">
-               <div>
-                  <p className="text-[10px] text-dark-500 uppercase font-black tracking-widest mb-1">Daily Sessions</p>
-                  <p className="text-sm font-black text-gold-600">{stats?.sessionsToday || 0} / {stats?.dailySessionLimit || 0}</p>
+            <div className="mb-4 grid grid-cols-3 gap-2 bg-slate-50 border border-dark-100/10 rounded-2xl p-3 shadow-sm">
+               <div className="text-center">
+                  <p className="text-[9px] text-dark-500 uppercase font-black tracking-tighter mb-1">Daily</p>
+                  <p className="text-sm font-black text-gold-600">{stats?.sessionsToday || 0} / {stats?.dailySessionLimit || 1}</p>
                </div>
-               <div className="w-[1px] h-8 bg-dark-100/10" />
-               <div className="text-right">
-                  <p className="text-[10px] text-dark-500 uppercase font-black tracking-widest mb-1">Session Limit</p>
-                  <p className="text-sm font-black text-dark-200">{stats?.maxSessionMinutes || 0} min</p>
+               <div className="w-[1px] h-8 bg-dark-100/10 mx-auto" />
+               <div className="text-center">
+                  <p className="text-[9px] text-dark-500 uppercase font-black tracking-tighter mb-1">Plan Total</p>
+                  <p className="text-sm font-black text-dark-200">{stats?.sessionsCompleted || 0} / {stats?.totalSessionsLimit || 0}</p>
                </div>
             </div>
 

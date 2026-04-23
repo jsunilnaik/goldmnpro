@@ -69,7 +69,9 @@ export async function GET(request) {
       todayEarnings,
       remainingToCap, // New accurate field
       sessionsToday: todaySessionsCount,
-      dailySessionLimit: 1, // CONCEPT: One session per day for all plans
+      dailySessionLimit: 1, 
+      totalSessionsLimit: subscription?.totalSessionsExpected || subscription?.plan?.dailySessionLimit || 30,
+      sessionsCompleted: subscription?.sessionsCompleted || 0,
       maxSessionMinutes: subscription?.plan?.maxSessionMinutes || 1440,
       maturity: {
         pendingValue: wallet?.pendingMaturityValue || 0,

@@ -75,11 +75,11 @@ export async function POST(request) {
       createdAt: { $gte: startOfToday },
     });
 
-    const limit = 1; // GLOBAL LIMIT: Only one session per day
+    const limit = 1; // CONCEPT: Only one session per day, spread across plan duration
     if (sessionsToday >= limit) {
       return NextResponse.json(
         { 
-          message: `Daily mining quota reached (1/1). Please return tomorrow!`,
+          message: `Daily mining quota reached (${sessionsToday}/${limit}). Please return tomorrow!`,
           sessionsToday,
           limit
         },
@@ -89,10 +89,11 @@ export async function POST(request) {
 
     // Calculate session cost (Gradual Spending - Now 1 session/day)
     const duration = subscription.plan.duration || 30;
-    const expectedSessions = subscription.totalSessionsExpected || duration;
+    // TREAT dailySessionLimit as TOTAL SESSIONS for the plan duration
+    const expectedSessions = subscription.totalSessionsExpected || subscription.plan.dailySessionLimit || duration;
     
     // Ensure subscription has the expected session count stored accurately
-    if (!subscription.totalSessionsExpected) {
+    if (!subscription.totalSessionsExpected || subscription.totalSessionsExpected !== expectedSessions) {
       await Subscription.findByIdAndUpdate(subscription._id, { totalSessionsExpected: expectedSessions });
     }
 
