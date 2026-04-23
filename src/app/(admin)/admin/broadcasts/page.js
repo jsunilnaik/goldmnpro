@@ -17,7 +17,8 @@ import {
   XCircle,
   Link as LinkIcon,
   Loader2,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getAllStates, getCitiesForState } from '@/lib/india-cities';
@@ -37,10 +38,13 @@ export default function AdminBroadcastsPage() {
     targetType: 'global',
     targetState: '',
     targetCity: '',
-    buttonText: '',
     buttonUrl: '',
     isActive: true,
+    excludedStates: [],
+    excludedCities: [],
+    includedCities: [],
   });
+  const [selectedStateForCityExclusion, setSelectedStateForCityExclusion] = useState('');
 
   useEffect(() => {
     fetchBroadcasts();
@@ -71,6 +75,9 @@ export default function AdminBroadcastsPage() {
         buttonText: broadcast.buttonText || '',
         buttonUrl: broadcast.buttonUrl || '',
         isActive: broadcast.isActive,
+        excludedStates: broadcast.excludedStates || [],
+        excludedCities: broadcast.excludedCities || [],
+        includedCities: broadcast.includedCities || [],
       });
     } else {
       setEditingBroadcast(null);
@@ -84,6 +91,9 @@ export default function AdminBroadcastsPage() {
         buttonText: '',
         buttonUrl: '',
         isActive: true,
+        excludedStates: [],
+        excludedCities: [],
+        includedCities: [],
       });
     }
     setIsModalOpen(true);
@@ -199,8 +209,14 @@ export default function AdminBroadcastsPage() {
 
                 <div className="p-6 space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${b.type === 'video' ? 'bg-red-50 text-red-600' : 'bg-blue-50 text-blue-600'}`}>
-                      {b.type === 'video' ? <Video size={18} /> : <Type size={18} />}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                      b.type === 'video' ? 'bg-red-50 text-red-600' : 
+                      b.type === 'image' ? 'bg-purple-50 text-purple-600' : 
+                      'bg-blue-50 text-blue-600'
+                    }`}>
+                      {b.type === 'video' ? <Video size={18} /> : 
+                       b.type === 'image' ? <ImageIcon size={18} /> : 
+                       <Type size={18} />}
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-dark-50 truncate max-w-[150px]">{b.title}</h3>
@@ -290,6 +306,13 @@ export default function AdminBroadcastsPage() {
                            >
                              <Video size={14} /> Video
                            </button>
+                           <button 
+                             type="button" 
+                             onClick={() => setFormData({...formData, type: 'image'})}
+                             className={`flex-1 py-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-2 ${formData.type === 'image' ? 'bg-purple-600 text-white border-purple-600 shadow-lg shadow-purple-500/20' : 'bg-white border-dark-900/10 text-dark-400'}`}
+                           >
+                             <ImageIcon size={14} /> Image
+                           </button>
                         </div>
                       </div>
                    </div>
@@ -336,7 +359,9 @@ export default function AdminBroadcastsPage() {
                 {/* Content Payload */}
                 <div className="space-y-1.5">
                    <label className="text-[10px] font-black uppercase text-dark-400 tracking-widest pl-1">
-                     {formData.type === 'video' ? 'Video URL (YouTube/IG Reels)' : 'Announcement Body'}
+                     {formData.type === 'video' ? 'Video URL (YouTube/IG Reels)' : 
+                      formData.type === 'image' ? 'Image URL' : 
+                      'Announcement Body'}
                    </label>
                    {formData.type === 'video' ? (
                      <div className="space-y-3">
@@ -359,6 +384,27 @@ export default function AdminBroadcastsPage() {
                          </div>
                        )}
                      </div>
+                   ) : formData.type === 'image' ? (
+                     <div className="space-y-3">
+                       <input 
+                         type="url" 
+                         required 
+                         value={formData.content} 
+                         onChange={e => setFormData({...formData, content: e.target.value})} 
+                         placeholder="https://example.com/image.jpg" 
+                         className="w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-mono shadow-inner" 
+                       />
+                       {formData.content && (
+                         <div className="relative aspect-video bg-slate-100 rounded-2xl overflow-hidden border border-dark-900/10 shadow-lg">
+                            <img 
+                              src={formData.content} 
+                              alt="Preview" 
+                              className="w-full h-full object-contain"
+                              onError={(e) => { e.target.src = 'https://placehold.co/600x400?text=Invalid+Image+URL'; }}
+                            />
+                         </div>
+                       )}
+                     </div>
                    ) : (
                      <textarea 
                         required 
@@ -370,6 +416,133 @@ export default function AdminBroadcastsPage() {
                      />
                    )}
                 </div>
+
+                 {/* Exclusions */}
+                 <div className="bg-red-50/50 p-6 rounded-[2rem] border border-dashed border-red-900/10 space-y-4">
+                    <div className="flex items-center justify-between">
+                       <h4 className="text-[10px] font-black uppercase text-red-600 tracking-widest flex items-center gap-2">
+                          <XCircle size={12} /> Exclude Regions (Optional)
+                       </h4>
+                       <p className="text-[9px] text-red-400 font-bold uppercase italic">Filter out specific audiences</p>
+                    </div>
+                    
+                    <div className="space-y-4">
+                       {/* Single State Selector */}
+                       <div className="space-y-1.5">
+                          <label className="text-[9px] font-bold text-dark-400 pl-1">1. Select State</label>
+                          <select 
+                            value={selectedStateForCityExclusion}
+                            onChange={e => setSelectedStateForCityExclusion(e.target.value)}
+                            className="w-full bg-white border rounded-xl px-4 py-3 text-sm font-bold shadow-sm"
+                          >
+                             <option value="">Choose a state...</option>
+                             {getAllStates().map(s => <option key={s} value={s}>{s}</option>)}
+                          </select>
+                       </div>
+
+                       {selectedStateForCityExclusion && (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
+                             {/* Action A: Exclude State */}
+                             <div className="bg-white p-4 rounded-2xl border border-red-100 space-y-3">
+                                <p className="text-[10px] font-black uppercase text-dark-500">Exclude Whole State</p>
+                                <button 
+                                  type="button"
+                                  disabled={formData.excludedStates.includes(selectedStateForCityExclusion)}
+                                  onClick={() => setFormData({...formData, excludedStates: [...formData.excludedStates, selectedStateForCityExclusion]})}
+                                  className="w-full py-2 bg-red-50 text-red-600 text-[11px] font-black uppercase rounded-xl border border-red-200 hover:bg-red-600 hover:text-white transition-all disabled:opacity-50"
+                                >
+                                   {formData.excludedStates.includes(selectedStateForCityExclusion) ? 'Already Excluded' : `Exclude ${selectedStateForCityExclusion}`}
+                                </button>
+                             </div>
+
+                             {/* Action B: Exclude/Include Cities */}
+                             <div className="bg-white p-4 rounded-2xl border border-red-100 space-y-3">
+                                <p className="text-[10px] font-black uppercase text-dark-500">Target Specific Cities</p>
+                                <div className="space-y-2">
+                                   <select 
+                                     onChange={e => {
+                                       if (e.target.value) {
+                                          // Add to excluded list
+                                          if (!formData.excludedCities.includes(e.target.value)) {
+                                             setFormData({...formData, excludedCities: [...formData.excludedCities, e.target.value]});
+                                          }
+                                       }
+                                     }}
+                                     className="w-full py-2 px-3 bg-red-50 border border-red-100 rounded-xl text-[11px] font-bold text-red-600"
+                                   >
+                                      <option value="">Add to EXCLUDED list...</option>
+                                      {getCitiesForState(selectedStateForCityExclusion).map(c => (
+                                        <option key={c.name} value={c.name}>{c.name}</option>
+                                      ))}
+                                   </select>
+
+                                   <select 
+                                     onChange={e => {
+                                       if (e.target.value) {
+                                          // Add to included list (Exceptions)
+                                          if (!formData.includedCities.includes(e.target.value)) {
+                                             setFormData({...formData, includedCities: [...formData.includedCities, e.target.value]});
+                                          }
+                                       }
+                                     }}
+                                     className="w-full py-2 px-3 bg-green-50 border border-green-100 rounded-xl text-[11px] font-bold text-green-600"
+                                   >
+                                      <option value="">Add as EXCEPTION (Always Include)...</option>
+                                      {getCitiesForState(selectedStateForCityExclusion).map(c => (
+                                        <option key={c.name} value={c.name}>{c.name}</option>
+                                      ))}
+                                   </select>
+                                </div>
+                             </div>
+                          </div>
+                       )}
+
+                       {/* Exclusion Tags Summary */}
+                       {(formData.excludedStates.length > 0 || formData.excludedCities.length > 0) && (
+                         <div className="pt-4 border-t border-red-900/5 space-y-3">
+                            {formData.excludedStates.length > 0 && (
+                               <div className="space-y-1.5">
+                                  <label className="text-[8px] font-black uppercase text-red-400">Excluded States</label>
+                                  <div className="flex flex-wrap gap-1.5">
+                                     {formData.excludedStates.map(s => (
+                                       <span key={s} className="bg-red-600 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
+                                         {s}
+                                         <button type="button" onClick={() => setFormData({...formData, excludedStates: formData.excludedStates.filter(x => x !== s)})}><XCircle size={12} /></button>
+                                       </span>
+                                     ))}
+                                  </div>
+                               </div>
+                            )}
+                            {formData.excludedCities.length > 0 && (
+                               <div className="space-y-1.5">
+                                  <label className="text-[8px] font-black uppercase text-red-400">Excluded Cities</label>
+                                  <div className="flex flex-wrap gap-1.5">
+                                     {formData.excludedCities.map(c => (
+                                       <span key={c} className="bg-white border border-red-200 text-red-600 px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
+                                         {c}
+                                         <button type="button" onClick={() => setFormData({...formData, excludedCities: formData.excludedCities.filter(x => x !== c)})}><XCircle size={12} /></button>
+                                       </span>
+                                     ))}
+                                  </div>
+                               </div>
+                            )}
+                            {formData.includedCities.length > 0 && (
+                               <div className="space-y-1.5">
+                                  <label className="text-[8px] font-black uppercase text-green-500">Included Exceptions (Always Visible)</label>
+                                  <div className="flex flex-wrap gap-1.5">
+                                     {formData.includedCities.map(c => (
+                                       <span key={c} className="bg-green-600 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 shadow-sm">
+                                         {c}
+                                         <button type="button" onClick={() => setFormData({...formData, includedCities: formData.includedCities.filter(x => x !== c)})}><XCircle size={12} /></button>
+                                       </span>
+                                     ))}
+                                  </div>
+                               </div>
+                            )}
+                         </div>
+                       )}
+                    </div>
+                 </div>
 
                 {/* Call to Action */}
                 <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-dashed border-dark-900/10 space-y-4">

@@ -63,10 +63,11 @@ export default function Header() {
   };
 
   const formatShortcut = (num) => {
-    if (!num) return '0.00';
-    if (num >= 1000000) return (num / 1000000).toFixed(2) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-    return num.toLocaleString('en-IN');
+    if (!num && num !== 0) return '0.00';
+    return num.toLocaleString('en-IN', { 
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2 
+    });
   };
 
   return (

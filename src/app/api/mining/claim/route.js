@@ -51,8 +51,19 @@ export async function POST(request) {
     const remainingPotential = wallet.miningBalance || 0;
 
     // 2. Fetch Subscription and Plan for duration limits
-    const subscription = await Subscription.findById(existingSession.subscription).populate('plan');
-    if (!subscription) throw new Error('Subscription not found');
+    let subscription = await Subscription.findById(existingSession.subscription).populate('plan');
+    
+    // Fallback: If the linked subscription is missing, try to find the user's current active plan
+    if (!subscription) {
+      subscription = await Subscription.findOne({
+        user: user._id,
+        status: 'active',
+        endDate: { $gt: new Date() }
+      }).populate('plan');
+    }
+
+    if (!subscription) throw new Error('No active subscription found. Please ensure you have an active plan.');
+    if (!subscription.plan) throw new Error('Plan details not found. Please contact support.');
 
     // 2.5 Calculate accurate remaining potential for this specific plan
     const planMax = (subscription.amountPaid || subscription.plan.price) * 2;
@@ -113,7 +124,7 @@ export async function POST(request) {
 
     // 4. Update session
     const session = await MiningSession.findOneAndUpdate(
-      { _id: sessionId, user: user._id, status: 'active' },
+      { _id: existingSession._id, user: user._id, status: 'active' },
       {
         $set: {
           status: 'claimed',
@@ -211,7 +222,7 @@ export async function POST(request) {
   } catch (error) {
     console.error('Claim error:', error);
     return NextResponse.json(
-      { message: 'Failed to claim rewards' },
+      { message: 'Failed to claim rewards: ' + error.message, error: error.stack },
       { status: 500 }
     );
   }

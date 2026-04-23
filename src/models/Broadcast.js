@@ -7,7 +7,7 @@ const BroadcastSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['text', 'video'],
+    enum: ['text', 'video', 'image'],
     default: 'text',
   },
   content: {
@@ -43,11 +43,28 @@ const BroadcastSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  excludedStates: {
+    type: [String],
+    default: [],
+  },
+  excludedCities: {
+    type: [String],
+    default: [],
+  },
+  includedCities: {
+    type: [String],
+    default: [],
+  },
 }, {
   timestamps: true,
 });
 
 // Index for fast targeting
 BroadcastSchema.index({ isActive: 1, targetType: 1, targetCity: 1 });
+
+// Clear model cache in development to pick up schema changes
+if (process.env.NODE_ENV === 'development') {
+  delete mongoose.models.Broadcast;
+}
 
 export default mongoose.models.Broadcast || mongoose.model('Broadcast', BroadcastSchema);

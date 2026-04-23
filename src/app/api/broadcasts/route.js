@@ -31,9 +31,41 @@ export async function GET(request) {
       });
     }
 
-    const broadcasts = await Broadcast.find(query)
+    let broadcasts = await Broadcast.find(query)
       .sort({ createdAt: -1 })
-      .limit(5); // Return a few recent ones, UI will decide priority
+      .limit(10); // Fetch a few more to allow for filtering
+
+    // Client-side filtering for exclusions/inclusions
+    if (user?.state || user?.city) {
+      console.log(`DEBUG: Filtering broadcasts for User [${user.city}, ${user.state}]`);
+      broadcasts = broadcasts.filter(b => {
+        console.log(`DEBUG: Checking Broadcast [${b.title}]`);
+        
+        // Inclusion takes absolute priority (Exceptions)
+        if (user.city && b.includedCities?.includes(user.city)) {
+          console.log(`DEBUG: --> INCLUDED by city exception [${user.city}]`);
+          return true;
+        }
+
+        // Otherwise check exclusions
+        if (user.state && b.excludedStates?.includes(user.state)) {
+          console.log(`DEBUG: --> EXCLUDED by state [${user.state}]`);
+          return false;
+        }
+        if (user.city && b.excludedCities?.includes(user.city)) {
+          console.log(`DEBUG: --> EXCLUDED by city [${user.city}]`);
+          return false;
+        }
+        
+        console.log(`DEBUG: --> ALLOWED (No exclusions matched)`);
+        return true;
+      });
+    } else {
+      console.log(`DEBUG: User has no city/state defined. Skipping regional filters.`);
+    }
+
+    // Limit back to 5 after filtering
+    broadcasts = broadcasts.slice(0, 5);
 
     return NextResponse.json({ broadcasts });
   } catch (error) {

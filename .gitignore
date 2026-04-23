@@ -3,7 +3,5 @@ graphify-out
 .wrangler
 .next
 .gemini
-.gitignore
 .graphifyignore
 .env.local
-.env.example

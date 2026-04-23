@@ -63,90 +63,103 @@ export default function BroadcastModal() {
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          className="relative w-full max-w-xl bg-white border border-dark-900/10 rounded-[2.5rem] overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] flex flex-col"
+          className="relative w-[calc(100%-2rem)] max-w-md md:max-w-3xl bg-white rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_-12px_rgba(0,0,0,0.4)] flex flex-col md:flex-row"
         >
-          {/* Close Button */}
-          <button
-            onClick={handleDismiss}
-            className="absolute top-4 right-4 z-20 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md border border-white/20 transition-all"
-          >
-            <X size={18} />
-          </button>
-
-          {/* Header/Title Banner */}
-          <div className="relative h-20 bg-dark-50 flex items-center px-8 border-b border-white/5">
-             <div className="absolute inset-0 overflow-hidden opacity-20">
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-red-600/50 to-blue-600/50 mix-blend-overlay" />
-             </div>
-             <div className="relative flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-600 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
-                   <Megaphone size={18} />
-                </div>
-                <div>
-                  <h3 className="text-white font-black uppercase tracking-[0.2em] text-[10px]">Administrative Broadcast</h3>
-                  <h2 className="text-white font-display font-bold text-lg leading-tight truncate max-w-[300px]">{activeBroadcast.title}</h2>
-                </div>
-             </div>
+          {/* Left Section - Vibrant Accent (Header on mobile) */}
+          <div className="h-48 md:h-auto md:w-[38%] bg-orange-500 bg-gradient-to-br from-orange-400 to-orange-600 p-6 md:p-10 flex flex-col items-center justify-center text-white relative overflow-hidden">
+            {/* Background pattern */}
+            <div className="absolute inset-0 opacity-10">
+               <Megaphone size={250} className="absolute -bottom-10 -left-10 rotate-12" />
+            </div>
+            
+            <motion.div
+              animate={{ rotate: [0, -10, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="relative z-10 w-16 h-16 md:w-20 md:h-20 rounded-3xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-4 md:mb-6 border border-white/30 shadow-xl"
+            >
+              <Megaphone size={32} className="md:size-[40px] text-white" />
+            </motion.div>
+            
+            <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tighter leading-[0.8] relative z-10 text-center">
+              Gold<br/>Mine
+            </h1>
+            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] mt-3 md:mt-4 opacity-70 relative z-10 text-center">
+              Administrative<br className="hidden md:block" /> Broadcast
+            </p>
           </div>
 
-          {/* Body Content */}
-          <div className="flex-1">
-             {activeBroadcast.type === 'video' ? (
-               <div className="relative aspect-video bg-black group">
-                  <iframe
-                    src={`${getEmbedUrl(activeBroadcast.content)}?autoplay=0`}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                  {/* Subtle video label Overlay (only visible on IG if needed, normally iframe covers it) */}
-                  <div className="absolute bottom-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Play size={10} className="fill-white text-white" />
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Featured Content</span>
-                  </div>
-               </div>
-             ) : (
-               <div className="p-8 space-y-4">
-                  <div className="p-6 bg-slate-50 border border-dark-900/5 rounded-[2rem] relative overflow-hidden group">
-                     {/* Decorative background mark */}
-                     <Megaphone size={120} className="absolute -bottom-8 -right-8 text-white opacity-40 group-hover:rotate-12 transition-transform duration-700" />
-                     <p className="relative text-dark-100 text-sm leading-relaxed font-bold whitespace-pre-wrap">
-                        {activeBroadcast.content}
-                     </p>
-                  </div>
-               </div>
-             )}
-          </div>
+          {/* Right Section - Content */}
+          <div className="flex-1 p-6 md:p-10 flex flex-col relative bg-white">
+            {/* Close Button */}
+            <button
+              onClick={handleDismiss}
+              className="absolute top-4 right-4 md:top-6 md:right-6 p-2 rounded-full hover:bg-slate-100 text-slate-300 hover:text-slate-600 transition-all z-20"
+            >
+              <X className="w-5 h-5 md:w-6 md:h-6" />
+            </button>
 
-          {/* Footer/Action */}
-          <div className="p-6 bg-slate-50/50 border-t border-dark-900/5">
-             {activeBroadcast.buttonUrl ? (
-                <div className="flex flex-col sm:flex-row gap-3">
-                   <a
-                     href={activeBroadcast.buttonUrl}
-                     target="_blank"
-                     rel="noopener noreferrer"
-                     onClick={handleDismiss}
-                     className="flex-1 bg-red-600 text-white font-black uppercase tracking-widest text-[11px] py-4 rounded-2xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:bg-red-700 transition-all hover:translate-y-[-2px] active:translate-y-0"
-                   >
-                     {activeBroadcast.buttonText || 'Take Action'}
-                     <ExternalLink size={14} />
-                   </a>
-                   <button
-                     onClick={handleDismiss}
-                     className="px-8 py-4 rounded-2xl bg-white border border-dark-900/10 text-dark-400 font-black uppercase tracking-widest text-[11px] hover:text-dark-50 transition-all"
-                   >
-                     Acknowledge
-                   </button>
-                </div>
-             ) : (
-                <button
-                  onClick={handleDismiss}
-                  className="w-full bg-dark-50 text-white font-black uppercase tracking-widest text-[11px] py-4 rounded-2xl shadow-lg hover:bg-dark-100 transition-all hover:translate-y-[-2px] active:translate-y-0"
-                >
-                  I Understand
-                </button>
-             )}
+            <div className="flex-1 flex flex-col justify-center min-h-0">
+              <h2 className="text-2xl md:text-3xl font-display font-black text-slate-900 leading-tight mb-4 pr-8">
+                {activeBroadcast.title}
+              </h2>
+              
+              <div className="overflow-y-auto max-h-[250px] md:max-h-[350px] pr-2 custom-scrollbar">
+                {activeBroadcast.type === 'video' ? (
+                  <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-lg mb-4">
+                    <iframe
+                      src={`${getEmbedUrl(activeBroadcast.content)}?autoplay=0`}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  </div>
+                ) : activeBroadcast.type === 'image' ? (
+                  <div className="relative rounded-2xl overflow-hidden shadow-lg mb-4 bg-slate-50 border border-slate-100">
+                    <img 
+                      src={activeBroadcast.content} 
+                      alt={activeBroadcast.title} 
+                      className="w-full h-auto object-contain max-h-[300px]"
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </div>
+                ) : (
+                  <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium whitespace-pre-wrap">
+                    {activeBroadcast.content}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-6 md:mt-8 flex flex-col gap-2">
+               {activeBroadcast.buttonUrl ? (
+                  <div className="flex flex-col gap-2">
+                     <a
+                       href={activeBroadcast.buttonUrl}
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       onClick={handleDismiss}
+                       className="w-full bg-orange-500 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl flex items-center justify-center gap-2 shadow-[0_10px_20px_-5px_rgba(249,115,22,0.4)] hover:bg-orange-600 transition-all active:scale-95"
+                     >
+                       {activeBroadcast.buttonText || 'Details'}
+                       <ExternalLink size={14} />
+                     </a>
+                     <button
+                       onClick={handleDismiss}
+                       className="w-full py-2 text-slate-400 font-bold uppercase tracking-widest text-[9px] hover:text-slate-900 transition-all"
+                     >
+                       Dismiss
+                     </button>
+                  </div>
+               ) : (
+                  <button
+                    onClick={handleDismiss}
+                    className="w-full bg-[#0f172a] text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-[0_10px_25px_-5px_rgba(15,23,42,0.3)] hover:bg-[#1e293b] transition-all active:scale-95"
+                  >
+                    I Understand
+                  </button>
+               )}
+            </div>
           </div>
         </motion.div>
       </div>

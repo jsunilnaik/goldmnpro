@@ -154,8 +154,8 @@ export function MiningProvider({ children }) {
         };
       }
       
-      // If server returns "No session found", it might have been claimed elsewhere
-      if (res.status === 404) {
+      // If server returns "No session found" or "Already claimed", sync UI
+      if (res.status === 404 || res.status === 400) {
         await fetchStatus(); // Sync UI
       }
       
