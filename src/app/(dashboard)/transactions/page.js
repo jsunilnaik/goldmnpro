@@ -37,11 +37,15 @@ export default function TransactionsPage() {
         type: filter,
       });
       const res = await fetch(`/api/wallet/history?${params}`);
-      const data = await res.json();
-      if (res.ok) {
-        setTransactions(data.transactions || []);
-        setTotalPages(data.totalPages || 1);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: `Error ${res.status}: Server returned HTML instead of JSON` }));
+        throw new Error(errorData.message || 'Failed to fetch transactions');
       }
+
+      const data = await res.json();
+      setTransactions(data.transactions || []);
+      setTotalPages(data.totalPages || 1);
     } catch (error) {
       console.error(error);
     } finally {
