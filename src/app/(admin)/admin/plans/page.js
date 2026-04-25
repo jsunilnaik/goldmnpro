@@ -34,7 +34,9 @@ export default function AdminPlansPage() {
     referralBonus: 5,
     isActive: true,
     isPopular: false,
-    dailySessionLimit: 4,
+    dailySessionLimit: 1,
+    maxSessionMinutes: 8,
+    totalSessionsLimit: 30,
   });
 
   useEffect(() => {
@@ -117,7 +119,9 @@ export default function AdminPlansPage() {
       referralBonus: plan.referralBonus,
       isActive: plan.isActive,
       isPopular: plan.isPopular,
-      dailySessionLimit: plan.dailySessionLimit || 4,
+      dailySessionLimit: plan.dailySessionLimit || 1,
+      maxSessionMinutes: plan.maxSessionMinutes || 8,
+      totalSessionsLimit: plan.totalSessionsLimit || (plan.duration * (plan.dailySessionLimit || 1)),
     });
     setShowForm(true);
   };
@@ -135,7 +139,8 @@ export default function AdminPlansPage() {
             setFormData({
               name: '', slug: '', price: '', originalPrice: '', duration: 30,
               miningRate: '', goldPerPoint: 0.00001, estimatedMonthlyReturn: '',
-              referralBonus: 5, isActive: true, isPopular: false, dailySessionLimit: 4,
+              referralBonus: 5, isActive: true, isPopular: false, dailySessionLimit: 1,
+              maxSessionMinutes: 8, totalSessionsLimit: 30,
             });
             setShowForm(true);
           }}
@@ -313,28 +318,44 @@ export default function AdminPlansPage() {
                 </div>
               </div>
 
-              {/* Day Session Limit with Threshold logic */}
-              <div className="p-4 bg-gold-500/5 rounded-2xl border border-gold-500/10 mb-2">
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-[10px] text-gold-700 uppercase font-black tracking-widest">Mining Sessions / Day</label>
-                  <span className="bg-gold-500 text-dark-50 text-[10px] font-black px-2 py-0.5 rounded-md">{formData.dailySessionLimit} Sessions</span>
+              {/* Mining Sessions Configuration */}
+              <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border border-dark-900/5">
+                <div>
+                  <label className="text-[10px] text-dark-500 mb-2 block uppercase font-bold tracking-widest px-1">Daily Limit (Frequency)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={formData.dailySessionLimit}
+                    onChange={(e) => setFormData({ ...formData, dailySessionLimit: parseFloat(e.target.value) || 0 })}
+                    className="w-full bg-white border border-dark-900/10 rounded-xl px-4 py-3 text-sm font-bold text-dark-50 outline-none focus:border-red-500/50 shadow-sm transition-all"
+                  />
+                  <p className="text-[8px] text-dark-400 mt-1 px-1">
+                    * e.g. 1.0 = Daily, 0.33 = ~10 sessions/month, 2.0 = twice daily.
+                  </p>
                 </div>
-                <input
-                  type="range"
-                  min={formData.price >= 10000 ? 4 : 2}
-                  max="6"
-                  step="1"
-                  value={formData.dailySessionLimit}
-                  onChange={(e) => setFormData({ ...formData, dailySessionLimit: parseInt(e.target.value) })}
-                  className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-gold-500"
-                />
-                <div className="flex justify-between mt-2">
-                  <span className="text-[8px] font-bold text-dark-400">MIN: {formData.price >= 10000 ? '4 (High Value)' : '2'}</span>
-                  <span className="text-[8px] font-bold text-dark-400">MAX: 6</span>
+                <div>
+                  <label className="text-[10px] text-dark-500 mb-2 block uppercase font-bold tracking-widest px-1">Total Sessions (2X)</label>
+                  <input
+                    type="number"
+                    value={formData.totalSessionsLimit}
+                    onChange={(e) => setFormData({ ...formData, totalSessionsLimit: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-white border border-dark-900/10 rounded-xl px-4 py-3 text-sm font-bold text-dark-50 outline-none focus:border-red-500/50 shadow-sm transition-all"
+                    placeholder="30"
+                  />
                 </div>
-                {formData.price >= 10000 && formData.dailySessionLimit < 4 && (
-                    <p className="text-[9px] text-red-500 font-bold mt-2">⚠️ High-value plans require at least 4 sessions.</p>
-                )}
+                <div className="col-span-2">
+                  <label className="text-[10px] text-dark-500 mb-2 block uppercase font-bold tracking-widest px-1">Tier Time (min for session reward)</label>
+                  <input
+                    type="number"
+                    value={formData.maxSessionMinutes || 8}
+                    onChange={(e) => setFormData({ ...formData, maxSessionMinutes: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-white border border-dark-900/10 rounded-xl px-4 py-3 text-sm font-bold text-dark-50 outline-none focus:border-red-500/50 shadow-sm transition-all"
+                    placeholder="8"
+                  />
+                </div>
+                <p className="col-span-2 text-[9px] text-dark-400 font-medium px-1">
+                  * Total Sessions: number of sessions required to reach 2X investment return.
+                </p>
               </div>
 
               <div className="flex gap-6 p-4 bg-slate-50 rounded-2xl border border-dark-900/5">

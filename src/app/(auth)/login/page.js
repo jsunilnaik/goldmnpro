@@ -105,13 +105,24 @@ export default function LoginPage() {
           </motion.button>
         </form>
 
-        {/* Sign Up Link */}
-        <p className="text-center text-sm text-dark-500 mt-8 font-medium">
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-gold-600 font-bold hover:text-gold-500">
-            Sign Up
-          </Link>
-        </p>
+        {/* Sign Up & Home Links */}
+        <div className="space-y-4 mt-8">
+          <p className="text-center text-sm text-dark-500 font-medium">
+            Don't have an account?{' '}
+            <Link href="/signup" className="text-gold-600 font-bold hover:text-gold-500">
+              Sign Up
+            </Link>
+          </p>
+          
+          <div className="flex items-center justify-center pt-4 border-t border-dark-100">
+            <Link 
+              href="/" 
+              className="text-xs text-dark-400 hover:text-dark-100 font-bold uppercase tracking-widest transition-colors flex items-center gap-2"
+            >
+              Go to Homepage
+            </Link>
+          </div>
+        </div>
       </motion.div>
     </div>
   );

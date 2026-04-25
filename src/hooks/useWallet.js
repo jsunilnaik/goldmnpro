@@ -12,6 +12,11 @@ export default function useWallet() {
   const [error, setError] = useState(null);
 
   const fetchWallet = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
       const res = await fetch('/api/wallet');
@@ -19,13 +24,20 @@ export default function useWallet() {
       const data = await res.json();
       setWallet(data.wallet);
     } catch (err) {
-      setError(err.message);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
   const fetchTransactions = useCallback(async (p = 1, type = 'all', limit = 20) => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setTxLoading(false);
+      return;
+    }
+
     setTxLoading(true);
     try {
       const params = new URLSearchParams({ page: p.toString(), limit: limit.toString(), type });
@@ -41,7 +53,9 @@ export default function useWallet() {
       setTotalPages(data.totalPages || 1);
       setPage(p);
     } catch (err) {
-      console.error(err);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error(err);
+      }
     } finally {
       setTxLoading(false);
     }

@@ -19,6 +19,8 @@ export function MiningProvider({ children }) {
   const [miningRate, setMiningRate] = useState(0);
   const [todayEarnings, setTodayEarnings] = useState(0);
   const [maturity, setMaturity] = useState({ pendingValue: 0, lastReleaseAt: null });
+  const [isSessionAvailable, setIsSessionAvailable] = useState(true);
+  const [daysUntilNextSession, setDaysUntilNextSession] = useState(0);
   
   // Daily Quota State
   const [sessionsToday, setSessionsToday] = useState(0);
@@ -29,6 +31,11 @@ export function MiningProvider({ children }) {
   const pointsRef = useRef(0);
 
   const fetchStatus = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/mining/status');
       if (!res.ok) return;
@@ -56,8 +63,12 @@ export function MiningProvider({ children }) {
       setHasActivePlan(data.hasActivePlan || false);
       setSubscription(data.subscription || null);
       if (data.maturity) setMaturity(data.maturity);
+      setIsSessionAvailable(data.isSessionAvailable !== false);
+      setDaysUntilNextSession(data.daysUntilNextSession || 0);
     } catch (error) {
-      console.error('Mining status fetch error:', error);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error('Mining status fetch error:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -214,6 +225,8 @@ export function MiningProvider({ children }) {
       sessionsToday,
       dailySessionLimit,
       maxSessionMinutes,
+      isSessionAvailable,
+      daysUntilNextSession,
       maturity,
     }}>
       {children}

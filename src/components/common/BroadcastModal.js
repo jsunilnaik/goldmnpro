@@ -15,6 +15,8 @@ export default function BroadcastModal() {
   }, []);
 
   const fetchLatestBroadcast = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
     try {
       const res = await fetch('/api/broadcasts');
       const data = await res.json();
@@ -31,6 +33,8 @@ export default function BroadcastModal() {
         }
       }
     } catch (err) {
+      // Silently handle network errors
+      if (err.name === 'TypeError' && err.message === 'Failed to fetch') return;
       console.error('Failed to fetch announcements:', err);
     } finally {
       setLoading(false);

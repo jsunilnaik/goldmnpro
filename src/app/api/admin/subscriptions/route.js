@@ -97,7 +97,7 @@ export async function POST(request) {
             await subscription.save();
 
             return NextResponse.json({
-                message: `Subscription rejected for ${subscription.user.fullName}.`,
+                message: `Subscription rejected for ${subscription.user?.fullName || 'Unknown User'}.`,
                 subscription,
             });
         } else if (action === 'cancel') {
@@ -109,10 +109,12 @@ export async function POST(request) {
             await subscription.save();
 
             // Clear user's current plan if it's this one
-            await User.findOneAndUpdate(
-                { _id: subscription.user._id, currentPlan: subscription._id },
-                { $set: { currentPlan: null } }
-            );
+            if (subscription.user) {
+                await User.findOneAndUpdate(
+                    { _id: subscription.user._id, currentPlan: subscription._id },
+                    { $set: { currentPlan: null } }
+                );
+            }
 
             // Terminate any active mining sessions for this subscription
             await MiningSession.updateMany(
@@ -127,7 +129,7 @@ export async function POST(request) {
             );
 
             return NextResponse.json({
-                message: `❌ Subscription cancelled for ${subscription.user.fullName}. Their access and any active mining sessions have been revoked.`,
+                message: `❌ Subscription cancelled for ${subscription.user?.fullName || 'Unknown User'}. Their access and any active mining sessions have been revoked.`,
                 subscription,
             });
         } else if (action === 'delete') {
@@ -141,7 +143,7 @@ export async function POST(request) {
             await Subscription.findByIdAndDelete(subscriptionId);
 
             return NextResponse.json({
-                message: `🗑️ Subscription for ${subscription.user.fullName} has been permanently deleted.`,
+                message: `🗑️ Subscription for ${subscription.user?.fullName || 'Unknown User'} has been permanently deleted.`,
             });
         } else {
             return NextResponse.json(

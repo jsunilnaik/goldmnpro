@@ -14,6 +14,11 @@ export function AuthProvider({ children }) {
   const router = useRouter();
 
   const fetchUser = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/users/profile');
       if (res.ok) {
@@ -89,16 +94,17 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
-      setUser(null);
-      setWallet(null);
       toast.success('Logged out successfully');
-      router.push('/login');
+      // Use window.location.href to clear all state and avoid flicker
+      window.location.href = '/login';
     } catch (error) {
       console.error('Logout error:', error);
     }
   };
 
   const refreshWallet = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
     try {
       const res = await fetch('/api/wallet');
       if (res.ok) {
@@ -106,7 +112,9 @@ export function AuthProvider({ children }) {
         setWallet(data.wallet);
       }
     } catch (error) {
-      console.error('Wallet refresh error:', error);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error('Wallet refresh error:', error);
+      }
     }
   };
 

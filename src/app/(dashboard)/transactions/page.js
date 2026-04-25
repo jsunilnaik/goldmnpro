@@ -29,6 +29,10 @@ export default function TransactionsPage() {
   }, [filter, page]);
 
   const fetchTransactions = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -47,7 +51,9 @@ export default function TransactionsPage() {
       setTransactions(data.transactions || []);
       setTotalPages(data.totalPages || 1);
     } catch (error) {
-      console.error(error);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error(error);
+      }
     } finally {
       setLoading(false);
     }

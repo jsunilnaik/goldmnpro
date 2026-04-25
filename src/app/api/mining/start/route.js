@@ -66,25 +66,40 @@ export async function POST(request) {
       );
     }
 
-    // Check daily session limit
+    // Check dynamic session quota (Allows for fractional limits like 10 sessions / 30 days)
+    const startDate = new Date(subscription.startDate || subscription.createdAt);
+    const daysElapsed = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24));
+    const dailyFrequency = subscription.plan.dailySessionLimit || 1;
+    
+    // Total sessions allowed up to today (including carry-over)
+    const totalAllowedToDate = Math.ceil((daysElapsed + 1) * dailyFrequency);
+    const sessionsCompleted = subscription.sessionsCompleted || 0;
+
+    if (sessionsCompleted >= totalAllowedToDate) {
+      return NextResponse.json(
+        { 
+          message: `Your current quota is exhausted. Based on your plan frequency, your next session will be available later.`,
+          sessionsCompleted,
+          totalAllowedToDate,
+          daysElapsed
+        },
+        { status: 403 }
+      );
+    }
+
+    // Also check hard daily cap (if dailyFrequency > 1, allow multiple today)
     const startOfToday = new Date();
     startOfToday.setHours(0, 0, 0, 0);
-
-    const sessionsToday = await MiningSession.countDocuments({
+    const sessionsDoneToday = await MiningSession.countDocuments({
       user: user._id,
       createdAt: { $gte: startOfToday },
     });
 
-    const limit = 1; // CONCEPT: Only one session per day, spread across plan duration
-    if (sessionsToday >= limit) {
-      return NextResponse.json(
-        { 
-          message: `Daily mining quota reached (${sessionsToday}/${limit}). Please return tomorrow!`,
-          sessionsToday,
-          limit
-        },
-        { status: 403 }
-      );
+    if (dailyFrequency >= 1 && sessionsDoneToday >= Math.ceil(dailyFrequency)) {
+        return NextResponse.json(
+            { message: `Daily mining quota reached (${sessionsDoneToday}/${Math.ceil(dailyFrequency)}). Please return tomorrow!` },
+            { status: 403 }
+        );
     }
 
     // Calculate session cost (Gradual Spending - Now 1 session/day)

@@ -85,6 +85,12 @@ export default function ProfilePage() {
     const formData = new FormData();
     formData.append('file', file);
 
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast.error('You are offline. Please check your connection.');
+      setUploading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/users/profile/avatar', {
         method: 'POST',
@@ -99,7 +105,9 @@ export default function ProfilePage() {
         toast.error(data.message || 'Upload failed');
       }
     } catch (error) {
-      toast.error('Network error');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error');
+      }
     } finally {
       setUploading(false);
     }
@@ -123,7 +131,9 @@ export default function ProfilePage() {
         toast.error(data.message || 'Update failed');
       }
     } catch (error) {
-      toast.error('Network error');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error');
+      }
     } finally {
       setSaving(false);
     }
@@ -161,7 +171,9 @@ export default function ProfilePage() {
         toast.error(data.message || 'Failed');
       }
     } catch (error) {
-      toast.error('Network error');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error');
+      }
     } finally {
       setSaving(false);
     }
@@ -180,7 +192,9 @@ export default function ProfilePage() {
         fetchUser();
       }
     } catch (error) {
-      toast.error('Failed to remove');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Failed to remove');
+      }
     }
   };
 
@@ -201,7 +215,9 @@ export default function ProfilePage() {
         toast.error(data.message || 'KYC submission failed');
       }
     } catch (error) {
-      toast.error('Network error');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error');
+      }
     } finally {
       setSaving(false);
     }
@@ -233,7 +249,9 @@ export default function ProfilePage() {
         toast.error(data.message || 'Failed to change password');
       }
     } catch (error) {
-      toast.error('Network error');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error');
+      }
     } finally {
       setSaving(false);
     }

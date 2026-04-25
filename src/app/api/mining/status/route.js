@@ -64,14 +64,31 @@ export async function GET(request) {
     // Get current wallet maturity status
     const wallet = await Wallet.findOne({ user: user._id }).select('pendingMaturityValue lastMaturityReleaseAt createdAt').lean();
 
+    // Dynamic Quota Logic (Carry-over & Fractional support)
+    const dailyFrequency = subscription?.plan?.dailySessionLimit || 1;
+    const totalAllowedToDate = Math.ceil((daysElapsed + 1) * dailyFrequency);
+    const sessionsCompleted = subscription?.sessionsCompleted || 0;
+    
+    // Hard daily check
+    const sessionsDoneToday = await MiningSession.countDocuments({
+      user: user._id,
+      createdAt: { $gte: startOfToday },
+    });
+    
+    const isSessionAvailable = (sessionsCompleted < totalAllowedToDate) && 
+                               (dailyFrequency < 1 || sessionsDoneToday < Math.ceil(dailyFrequency));
+
     return NextResponse.json({
       activeSession,
       todayEarnings,
-      remainingToCap, // New accurate field
-      sessionsToday: todaySessionsCount,
-      dailySessionLimit: subscription?.plan?.dailySessionLimit || 1, 
-      totalSessionsLimit: subscription?.totalSessionsExpected || subscription?.plan?.dailySessionLimit || 30,
-      sessionsCompleted: subscription?.sessionsCompleted || 0,
+      remainingToCap,
+      sessionsToday: sessionsDoneToday,
+      dailySessionLimit: Math.ceil(dailyFrequency),
+      totalSessionsLimit: subscription?.totalSessionsExpected || 30,
+      sessionsCompleted,
+      isSessionAvailable,
+      totalAllowedToDate,
+      daysUntilNextSession: isSessionAvailable ? 0 : Math.max(1, Math.ceil((sessionsCompleted + 1) / dailyFrequency) - (daysElapsed + 1)),
       maxSessionMinutes: subscription?.plan?.maxSessionMinutes || 1440,
       maturity: {
         pendingValue: wallet?.pendingMaturityValue || 0,
@@ -89,6 +106,8 @@ export async function GET(request) {
         netDailyMining,
         totalDays,
         daysElapsed: Math.max(0, daysElapsed),
+        sessionsCompleted: subscription.sessionsCompleted || 0,
+        totalSessionsExpected: subscription.totalSessionsExpected || 30
       } : null,
       hasActivePlan: !!subscription,
     });

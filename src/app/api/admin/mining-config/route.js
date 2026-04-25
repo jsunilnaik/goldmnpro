@@ -3,6 +3,7 @@ import connectDB from '@/lib/mongodb';
 import { requireAdmin } from '@/lib/auth';
 import Plan from '@/models/Plan';
 import AdminConfig from '@/models/AdminConfig';
+import Subscription from '@/models/Subscription';
 
 export async function GET(request) {
   try {
@@ -19,6 +20,10 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function PUT(request) {
+  return POST(request);
 }
 
 export async function POST(request) {
@@ -38,16 +43,32 @@ export async function POST(request) {
           duration: parseInt(body.duration),
           miningRate: parseFloat(body.miningRate),
           goldPerPoint: body.goldPerPoint || 0.00001,
-          dailySessionLimit: 1, // CONCEPT: Only one session for all plans
+          dailySessionLimit: parseFloat(body.dailySessionLimit) || 1,
+          maxSessionMinutes: parseInt(body.maxSessionMinutes) || 8,
+          totalSessionsLimit: parseInt(body.totalSessionsLimit) || (parseInt(body.duration) * (parseInt(body.dailySessionLimit) || 1)),
+          estimatedMonthlyReturn: body.estimatedMonthlyReturn ? parseFloat(body.estimatedMonthlyReturn) : null,
+          referralBonus: parseInt(body.referralBonus) || 0,
           isActive: body.isActive !== false,
           isPopular: body.isPopular || false,
         };
 
         if (body.planId) {
-          await Plan.findByIdAndUpdate(body.planId, planData);
+          const updatedPlan = await Plan.findByIdAndUpdate(body.planId, planData, { new: true });
+          // Synchronize active subscriptions with new session limits
+          await Subscription.updateMany(
+            { plan: body.planId, status: 'active' },
+            { totalSessionsExpected: updatedPlan.totalSessionsLimit }
+          );
         } else {
           await Plan.create(planData);
         }
+        break;
+      }
+
+      case 'toggle_plan': {
+        const { planId, isActive } = body;
+        if (!planId) throw new Error('Plan ID is required');
+        await Plan.findByIdAndUpdate(planId, { isActive });
         break;
       }
 

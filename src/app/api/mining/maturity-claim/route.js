@@ -6,7 +6,7 @@ import Transaction from '@/models/Transaction';
 
 /**
  * POST: Claim matured gold reserves
- * Releases pendingMaturityValue into cashBalance if 7 days have passed.
+ * Releases pendingMaturityValue into cashBalance immediately upon user request.
  */
 export async function POST(request) {
   try {
@@ -21,25 +21,8 @@ export async function POST(request) {
       return NextResponse.json({ message: 'No pending reserves to claim' }, { status: 400 });
     }
 
-    // --- 7 DAY CHECK ---
-    const MATURITY_PERIOD_SECONDS = 7 * 24 * 60 * 60; // 7 days
-    const lastRelease = wallet.lastMaturityReleaseAt || wallet.createdAt;
+    // Release to Wallet is now immediate as per user request
     const now = new Date();
-    
-    // For testing/development verification, you might reduce this to 60 seconds
-    const secondsSinceLastRelease = Math.floor((now - lastRelease) / 1000);
-    const secondsRemaining = MATURITY_PERIOD_SECONDS - secondsSinceLastRelease;
-
-    if (secondsRemaining > 0) {
-      const days = Math.floor(secondsRemaining / 86400);
-      const hours = Math.floor((secondsRemaining % 86400) / 3600);
-      const minutes = Math.floor((secondsRemaining % 3600) / 60);
-      
-      return NextResponse.json({ 
-        message: `Reserve is still maturing. Please wait ${days}d ${hours}h ${minutes}m.`,
-        remainingSeconds: secondsRemaining
-      }, { status: 403 });
-    }
 
     // --- RELEASE LOGIC (Atomic Update) ---
     const updatedWallet = await Wallet.findOneAndUpdate(
@@ -67,12 +50,13 @@ export async function POST(request) {
       category: 'credit',
       amount: pendingValue,
       status: 'completed',
-      description: 'Released 7-day Gold Reserves to wallet',
+      description: 'Released Gold Reserves to wallet',
       balanceAfter: {
         points: updatedWallet.pointsBalance,
         gold: updatedWallet.goldBalance,
         cash: updatedWallet.cashBalance,
       },
+      referenceType: 'system',
     });
 
     return NextResponse.json({

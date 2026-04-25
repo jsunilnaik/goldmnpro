@@ -40,6 +40,8 @@ export default function Header() {
   }, []);
 
   const fetchNotifications = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+
     try {
       const res = await fetch('/api/notifications');
       if (res.ok) {
@@ -48,7 +50,12 @@ export default function Header() {
         setUnreadCount(data.unreadCount || 0);
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      // Silently handle network errors
+      if (error.name === 'TypeError' && error.message === 'Failed to fetch') return;
+      
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error('Error fetching notifications:', error);
+      }
     }
   };
 

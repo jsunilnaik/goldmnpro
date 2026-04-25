@@ -34,7 +34,7 @@ export async function activateSubscription(subscriptionId, activationSource = 'd
         subscription.endDate = new Date(Date.now() + (plan.duration || 30) * 24 * 60 * 60 * 1000);
         
         // Critical for 2X Reward calculation
-        subscription.totalSessionsExpected = (plan.duration || 30) * 1; // 1 session/day limit
+        subscription.totalSessionsExpected = plan.totalSessionsLimit || (plan.duration || 30) * (plan.dailySessionLimit || 1);
         
         await subscription.save();
 

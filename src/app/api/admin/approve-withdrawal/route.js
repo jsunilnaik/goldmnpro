@@ -73,12 +73,14 @@ export async function POST(request) {
         await withdrawal.save();
 
         // Notify User
-        await createNotification(withdrawal.user._id, {
-          title: 'Withdrawal Approved',
-          message: `Your withdrawal of ₹${withdrawal.amount.toLocaleString('en-IN')} has been approved and matched! check Match Section.`,
-          type: 'withdrawal',
-          actionUrl: '/withdraw'
-        });
+        if (withdrawal.user) {
+          await createNotification(withdrawal.user._id, {
+            title: 'Withdrawal Approved',
+            message: `Your withdrawal of ₹${withdrawal.amount.toLocaleString('en-IN')} has been approved and matched! check Match Section.`,
+            type: 'withdrawal',
+            actionUrl: '/withdraw'
+          });
+        }
         break;
       }
 
@@ -90,38 +92,42 @@ export async function POST(request) {
         await withdrawal.save();
 
         // Refund to wallet
-        await Wallet.findOneAndUpdate(
-          { user: withdrawal.user._id },
-          {
-            $inc: {
-              cashBalance: withdrawal.amount,
-              pendingWithdrawal: -withdrawal.amount,
-            },
-          }
-        );
+        if (withdrawal.user) {
+          await Wallet.findOneAndUpdate(
+            { user: withdrawal.user._id },
+            {
+              $inc: {
+                cashBalance: withdrawal.amount,
+                pendingWithdrawal: -withdrawal.amount,
+              },
+            }
+          );
 
-        // Record refund transaction
-        await Transaction.create({
-          user: withdrawal.user._id,
-          type: 'refund',
-          category: 'credit',
-          amount: withdrawal.amount,
-          status: 'completed',
-          description: `Withdrawal rejected - Amount refunded`,
-          referenceId: withdrawal._id.toString(),
-          referenceType: 'withdrawal',
-        });
+          // Record refund transaction
+          await Transaction.create({
+            user: withdrawal.user._id,
+            type: 'refund',
+            category: 'credit',
+            amount: withdrawal.amount,
+            status: 'completed',
+            description: `Withdrawal rejected - Amount refunded`,
+            referenceId: withdrawal._id.toString(),
+            referenceType: 'withdrawal',
+          });
+        }
         
         // Release from global treasury reserve
         await releaseFunds(withdrawal.amount);
 
         // Notify User
-        await createNotification(withdrawal.user._id, {
-          title: 'Withdrawal Rejected',
-          message: `Your withdrawal of ₹${withdrawal.amount.toLocaleString('en-IN')} was rejected. Reason: ${reason || 'Not specified'}`,
-          type: 'withdrawal',
-          actionUrl: '/withdraw'
-        });
+        if (withdrawal.user) {
+          await createNotification(withdrawal.user._id, {
+            title: 'Withdrawal Rejected',
+            message: `Your withdrawal of ₹${withdrawal.amount.toLocaleString('en-IN')} was rejected. Reason: ${reason || 'Not specified'}`,
+            type: 'withdrawal',
+            actionUrl: '/withdraw'
+          });
+        }
         break;
       }
 
@@ -131,16 +137,18 @@ export async function POST(request) {
         await withdrawal.save();
 
         // Update wallet
-        await Wallet.findOneAndUpdate(
-          { user: withdrawal.user._id },
-          {
-            $inc: {
-              pendingWithdrawal: -withdrawal.amount,
-              totalWithdrawn: withdrawal.netAmount || withdrawal.amount,
-            },
-            lastWithdrawalAt: new Date(),
-          }
-        );
+        if (withdrawal.user) {
+          await Wallet.findOneAndUpdate(
+            { user: withdrawal.user._id },
+            {
+              $inc: {
+                pendingWithdrawal: -withdrawal.amount,
+                totalWithdrawn: withdrawal.netAmount || withdrawal.amount,
+              },
+              lastWithdrawalAt: new Date(),
+            }
+          );
+        }
 
         // Update transaction status
         await Transaction.findOneAndUpdate(
@@ -157,12 +165,14 @@ export async function POST(request) {
         );
 
         // Notify User
-        await createNotification(withdrawal.user._id, {
-          title: 'Withdrawal Completed',
-          message: `Funds for ₹${withdrawal.amount.toLocaleString('en-IN')} have been transferred! Transaction ID: ${transactionRef}`,
-          type: 'withdrawal',
-          actionUrl: '/withdraw'
-        });
+        if (withdrawal.user) {
+          await createNotification(withdrawal.user._id, {
+            title: 'Withdrawal Completed',
+            message: `Funds for ₹${withdrawal.amount.toLocaleString('en-IN')} have been transferred! Transaction ID: ${transactionRef}`,
+            type: 'withdrawal',
+            actionUrl: '/withdraw'
+          });
+        }
         break;
       }
 

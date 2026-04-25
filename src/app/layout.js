@@ -7,6 +7,7 @@ import PWAInstallPrompt from '@/components/common/PWAInstallPrompt';
 import OfflineIndicator from '@/components/common/OfflineIndicator';
 import ToastSoundPlayer from '@/components/common/ToastSoundPlayer';
 import ImpersonationBanner from '@/components/admin/ImpersonationBanner';
+import { ConnectivityProvider } from '@/context/ConnectivityContext';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const poppins = Poppins({
@@ -76,44 +77,46 @@ export default async function RootLayout({ children }) {
       </head>
       <body className={`bg-slate-50 text-dark-50 font-sans antialiased overflow-x-hidden ${isImpersonating ? 'impersonating' : ''}`} suppressHydrationWarning>
         <AuthProvider>
-          <ImpersonationBanner initialIsImpersonating={isImpersonating} />
-          {/* Global Sound Listener for Toasts */}
-          <ToastSoundPlayer />
+          <ConnectivityProvider>
+            <ImpersonationBanner initialIsImpersonating={isImpersonating} />
+            {/* Global Sound Listener for Toasts */}
+            <ToastSoundPlayer />
 
-          {/* PWA Install Prompt - Top Header Bar for Mobile */}
-          <PWAInstallPrompt />
+            {/* PWA Install Prompt - Top Header Bar for Mobile */}
+            <PWAInstallPrompt />
 
-          {/* PWA Status Bar Spacer */}
-          <div className="pwa-status-bar" />
+            {/* PWA Status Bar Spacer */}
+            <div className="pwa-status-bar" />
 
-          {/* Offline Indicator */}
-          <OfflineIndicator />
+            {/* Offline Indicator */}
+            <OfflineIndicator />
 
-          {/* Main Content */}
-          {children}
+            {/* Main Content */}
+            {children}
 
-          {/* Toast Notifications */}
-          <Toaster
-            position="top-center"
-            toastOptions={{
-              duration: 3000,
-              style: {
-                background: '#ffffff',
-                color: '#0f172a',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                fontSize: '14px',
-                fontWeight: '500',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-              },
-              success: {
-                iconTheme: { primary: '#E6B800', secondary: '#ffffff' },
-              },
-              error: {
-                iconTheme: { primary: '#ef4444', secondary: '#ffffff' },
-              },
-            }}
-          />
+            {/* Toast Notifications */}
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                duration: 3000,
+                style: {
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                },
+                success: {
+                  iconTheme: { primary: '#E6B800', secondary: '#ffffff' },
+                },
+                error: {
+                  iconTheme: { primary: '#ef4444', secondary: '#ffffff' },
+                },
+              }}
+            />
+          </ConnectivityProvider>
         </AuthProvider>
       </body>
     </html>

@@ -148,9 +148,16 @@ export async function PATCH(request) {
       return NextResponse.json({ message: 'Location not found' }, { status: 404 });
     }
 
+    // Bulk block/unblock users in this city (except admins)
+    const userUpdateResult = await User.updateMany(
+      { city: location.city, state: location.state, role: { $ne: 'admin' } },
+      { $set: { isActive: isActive } }
+    );
+
     return NextResponse.json({
-      message: `Location ${location.city} is now ${location.isActive ? 'Active' : 'Inactive'}`,
+      message: `Location ${location.city} is now ${location.isActive ? 'Active' : 'Inactive'}. ${userUpdateResult.modifiedCount} users ${location.isActive ? 'unblocked' : 'blocked'}.`,
       location,
+      affectedUsers: userUpdateResult.modifiedCount
     });
   } catch (error) {
     console.error('Location update error:', error);

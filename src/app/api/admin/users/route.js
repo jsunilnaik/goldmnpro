@@ -141,6 +141,11 @@ export async function POST(request) {
       );
     }
 
+    // Check if city is active
+    const Location = (await import('@/models/Location')).default;
+    const location = await Location.findOne({ city, state });
+    const shouldBeActive = location ? location.isActive : true;
+
     const user = new User({
       fullName,
       email,
@@ -151,7 +156,7 @@ export async function POST(request) {
       state,
       tier,
       isKYCVerified: false,
-      isActive: true,
+      isActive: role === 'admin' ? true : shouldBeActive,
     });
 
     await user.save();
@@ -289,13 +294,23 @@ export async function PUT(request) {
 
         resultUser = await User.findByIdAndUpdate(userId, updates, { new: true });
 
-        // 2. Synchronize Location Counts
+        // 2. Synchronize Location Counts and Status
         const newCity = resultUser.city;
         const newState = resultUser.state;
 
         if (newCity !== oldCity || newState !== oldState) {
           try {
             const Location = (await import('@/models/Location')).default;
+            
+            // Check if new location is active and sync user status if it's not an admin
+            if (resultUser.role !== 'admin') {
+              const location = await Location.findOne({ city: newCity, state: newState });
+              if (location && resultUser.isActive !== location.isActive) {
+                resultUser.isActive = location.isActive;
+                await resultUser.save();
+              }
+            }
+
             // Decrement old
             if (oldCity && oldState) {
               await Location.updateOne({ city: oldCity, state: oldState }, { $inc: { userCount: -1 } });

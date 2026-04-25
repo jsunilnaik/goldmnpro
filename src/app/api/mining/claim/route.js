@@ -86,10 +86,8 @@ export async function POST(request) {
     const duration = subscription.plan.duration || 30;
     const expectedSessions = subscription.totalSessionsExpected || subscription.plan.dailySessionLimit || duration;
     
-    // Tiered Duration Logic
-    const planName = (subscription.plan.name || 'Bronze').toLowerCase();
-    const tieredTimes = { diamond: 1, gold: 2, silver: 4, bronze: 8 };
-    const maxSessionTime = tieredTimes[planName] || 8;
+    // Tiered Duration Logic - Now fully customizable via Plan settings
+    const maxSessionTime = subscription.plan.maxSessionMinutes || 8;
     const minMiningMinutes = maxSessionTime / 2;
 
     const fullSessionValue = totalPotential / expectedSessions;

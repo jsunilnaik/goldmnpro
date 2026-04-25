@@ -48,30 +48,27 @@ export default function PlansPage() {
   const [currentSubscriptionId, setCurrentSubscriptionId] = useState(null);
   const [adminRemainder, setAdminRemainder] = useState(0);
 
-  const qrCanvasRef = useRef(null);
-
   useEffect(() => {
     fetchPlans();
   }, []);
 
   const fetchPlans = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch('/api/plans');
       const data = await res.json();
       setPlans(data.plans);
     } catch (error) {
-      toast.error('Failed to load plans');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Failed to load plans');
+      }
     } finally {
       setLoading(false);
     }
   };
-
-  // Generate QR code on canvas using UPI deep link
-  useEffect(() => {
-    if (showPaymentModal && selectedPlan && qrCanvasRef.current) {
-      generateQR();
-    }
-  }, [showPaymentModal, selectedPlan, paymentStep]);
 
   const getUpiLink = (upiId, amount) => {
     if (!selectedPlan) return '';
@@ -106,6 +103,12 @@ export default function PlansPage() {
 
     setSubscribing(plan._id);
     setInitiating(true);
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast.error('You are offline. Please check your connection.');
+      setInitiating(false);
+      setSubscribing(null);
+      return;
+    }
     try {
       const res = await fetch('/api/payments/initiate', {
         method: 'POST',
@@ -129,7 +132,9 @@ export default function PlansPage() {
         toast.error(data.message || 'Failed to initiate payment. Please try again.');
       }
     } catch (error) {
-      toast.error('Network error. Please try again.');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error. Please try again.');
+      }
     } finally {
       setInitiating(false);
       setSubscribing(null);
@@ -191,6 +196,12 @@ export default function PlansPage() {
 
     setSubmitting(true);
 
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      toast.error('You are offline. Please check your connection.');
+      setSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/payments/submit-utr', {
         method: 'POST',
@@ -219,7 +230,9 @@ export default function PlansPage() {
         toast.error(data.message || 'Submission failed');
       }
     } catch (error) {
-      toast.error('Network error. Please try again.');
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        toast.error('Network error. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -297,6 +310,12 @@ export default function PlansPage() {
                   <Zap size={10} className="text-gold-600" />
                 </div>
                 <span className="text-dark-200 font-medium">Mining Rate: <strong className="text-gold-600">{plan.miningRate} pts/hr</strong></span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                  <Clock size={10} className="text-blue-600" />
+                </div>
+                <span className="text-dark-200 font-medium">Total Sessions: <strong className="text-blue-600">{(plan.duration * (plan.dailySessionLimit || 1))} Sessions</strong></span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">

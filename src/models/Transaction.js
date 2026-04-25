@@ -17,6 +17,7 @@ const transactionSchema = new mongoose.Schema({
       'bonus',
       'adjustment',
       'refund',
+      'maturity_release',
     ],
     required: true,
   },

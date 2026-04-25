@@ -40,6 +40,9 @@ const planSchema = new mongoose.Schema({
     type: Number,
     default: 8, // 8 minutes (Tiered mining)
   },
+  totalSessionsLimit: {
+    type: Number, // Total sessions to reach 2X cap
+  },
   goldPerPoint: {
     type: Number, // grams of gold per point
     required: true,

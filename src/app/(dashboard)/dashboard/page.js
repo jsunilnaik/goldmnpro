@@ -29,6 +29,11 @@ export default function DashboardPage() {
   }, []);
 
   const fetchDashboardData = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const [statsRes, txRes] = await Promise.all([
         fetch('/api/mining/status'),
@@ -39,7 +44,12 @@ export default function DashboardPage() {
       setStats(statsData);
       setRecentTx(txData.transactions || []);
     } catch (error) {
-      console.error('Dashboard data error:', error);
+      // Silently handle network errors
+      if (error.name === 'TypeError' && (error.message === 'Failed to fetch' || error.message?.includes('network'))) return;
+
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error('Dashboard data error:', error);
+      }
     } finally {
       setLoading(false);
     }
@@ -228,19 +238,19 @@ export default function DashboardPage() {
               <div className="flex justify-between items-end">
                 <p className="text-[10px] text-dark-400 uppercase font-bold">Earning Progress (2X Cap)</p>
                 <p className="text-xs font-mono font-bold text-gold-600">
-                  {(((stats?.subscription?.amountPaid * 2 - stats?.miningBalance) / (stats?.subscription?.amountPaid * 2)) * 100).toFixed(1)}%
+                  {Math.min(100, ((stats?.subscription?.totalValueEarned || 0) / ((stats?.subscription?.amountPaid || 1) * 2)) * 100).toFixed(1)}%
                 </p>
               </div>
-              <div className="h-2 w-full bg-dark-800 rounded-full overflow-hidden border border-dark-700">
+              <div className="h-2 w-full bg-dark-800 rounded-full overflow-hidden border border-dark-700 shadow-inner">
                 <motion.div
                   initial={{ width: 0 }}
-                  animate={{ width: `${Math.min(100, (((stats?.subscription?.amountPaid * 2 - stats?.miningBalance) / (stats?.subscription?.amountPaid * 2)) * 100))}%` }}
-                  className="h-full bg-gradient-to-r from-gold-600 to-yellow-400"
+                  animate={{ width: `${Math.min(100, ((stats?.subscription?.totalValueEarned || 0) / ((stats?.subscription?.amountPaid || 1) * 2)) * 100)}%` }}
+                  className="h-full bg-gold-gradient shadow-[0_0_8px_rgba(212,175,55,0.4)]"
                 />
               </div>
-              <div className="flex justify-between text-[10px] text-dark-500 font-medium">
-                <span>Earned: ₹{(stats?.subscription?.amountPaid * 2 - stats?.miningBalance).toFixed(2)}</span>
-                <span>Potential: ₹{(stats?.subscription?.amountPaid * 2).toFixed(2)}</span>
+              <div className="flex justify-between text-[10px] text-dark-500 font-bold uppercase tracking-wider">
+                <span>Earned: ₹{(stats?.subscription?.totalValueEarned || 0).toFixed(2)}</span>
+                <span>Potential: ₹{((stats?.subscription?.amountPaid || 0) * 2).toFixed(2)}</span>
               </div>
             </div>
 

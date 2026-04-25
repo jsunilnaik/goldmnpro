@@ -40,7 +40,9 @@ export default function MiningPage() {
     subscription,
     fetchStatus,
     maturity,
-    claimMaturity
+    claimMaturity,
+    isSessionAvailable,
+    daysUntilNextSession
   } = useMiningContext();
   
   const [particles, setParticles] = useState([]);
@@ -49,6 +51,10 @@ export default function MiningPage() {
   // Initialize
   useEffect(() => {
     const init = async () => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        setLoading(false);
+        return;
+      }
       await fetchStatus();
       setLoading(false);
     };
@@ -143,10 +149,15 @@ export default function MiningPage() {
       <div className="text-center space-y-4">
         {/* Daily Progress Status */}
         {!isMining && (
-          <div className="flex justify-center">
+          <div className="flex flex-col items-center gap-2">
              <div className="bg-gold-500/10 border border-gold-500/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-gold-600 shadow-sm">
-                {sessionsToday} / {dailySessionLimit} Sessions Used
+                Daily: {sessionsToday} / {dailySessionLimit}
              </div>
+             {subscription && (
+               <div className="bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-blue-600 shadow-sm">
+                  Plan Total: {subscription.sessionsCompleted || 0} / {subscription.totalSessionsExpected || 30}
+               </div>
+             )}
           </div>
         )}
 
@@ -175,75 +186,105 @@ export default function MiningPage() {
         )}
       </div>
 
-      {/* Mining Circle */}
-      <div className="relative flex items-center justify-center py-6">
+      {/* Mining Circle Area */}
+      <div className="flex flex-col items-center justify-center py-8">
+        <div className="relative flex items-center justify-center w-64 h-64">
+          {/* Outer Ring */}
+          <motion.div
+            animate={isMining ? { rotate: 360 } : {}}
+            transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
+            className={`absolute w-64 h-64 rounded-full border-2 border-dashed ${
+              isMining ? 'border-gold-500/40' : 'border-dark-100'
+            }`}
+          />
 
-        {/* Outer Ring */}
-        <motion.div
-          animate={isMining ? { rotate: 360 } : {}}
-          transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-          className={`absolute w-64 h-64 rounded-full border-2 border-dashed ${
-            isMining ? 'border-gold-500/40' : 'border-dark-100'
-          }`}
-        />
+          {/* Middle Ring */}
+          <motion.div
+            animate={isMining ? { rotate: -360 } : {}}
+            transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
+            className={`absolute w-52 h-52 rounded-full border ${
+              isMining ? 'border-gold-400/30' : 'border-dark-100'
+            }`}
+          />
 
-        {/* Middle Ring */}
-        <motion.div
-          animate={isMining ? { rotate: -360 } : {}}
-          transition={{ duration: 15, repeat: Infinity, ease: 'linear' }}
-          className={`absolute w-52 h-52 rounded-full border ${
-            isMining ? 'border-gold-400/30' : 'border-dark-100'
-          }`}
-        />
+          {/* Mining Button */}
+          <motion.button
+            whileTap={(actionLoading) ? {} : { scale: 0.95 }}
+            disabled={actionLoading}
+            onClick={() => {
+              if (isMining) {
+                claimRewards();
+              } else if (isSessionAvailable) {
+                startMining();
+              } else {
+                // Feedback for multiple taps on locked button
+                playMiningSound('error');
+                toast.error(daysUntilNextSession > 0 
+                  ? `Hold on! Next session in ${daysUntilNextSession} day${daysUntilNextSession > 1 ? 's' : ''}.`
+                  : 'Daily quota reached. Please return later!');
+              }
+            }}
+            className={`relative z-10 w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 transition-all duration-500 haptic-button ${
+              isMining
+                ? 'bg-gold-gradient mining-pulse shadow-lg shadow-gold-500/30'
+                : !isSessionAvailable 
+                  ? 'bg-slate-100 border border-slate-200 opacity-80 grayscale cursor-pointer'
+                  : 'bg-white border border-dark-800 hover:border-gold-500/50 shadow-sm'
+            } ${actionLoading ? 'opacity-80' : ''}`}
+          >
+            {actionLoading ? (
+              <div className="relative flex items-center justify-center">
+                {/* Premium Rotating Ring */}
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+                  className="w-14 h-14 rounded-full border-4 border-gold-500/10 border-t-gold-600 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
+                />
+                {/* Pulsing Core */}
+                <motion.div
+                  animate={{ 
+                    scale: [1, 1.2, 1],
+                    opacity: [0.5, 1, 0.5]
+                  }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute flex items-center justify-center"
+                >
+                  <Sparkles className="text-gold-600 drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" size={24} />
+                </motion.div>
+              </div>
+            ) : isMining ? (
+              <>
+                <Pickaxe className="w-10 h-10 text-dark-50 animate-mining" />
+                <span className="text-dark-50 font-bold text-xs uppercase tracking-wider">
+                  Mining...
+                </span>
+                <span className="text-dark-50/80 text-[10px]">Tap to claim</span>
+              </>
+            ) : (
+              <>
+                <Play className="w-10 h-10 text-gold-600 ml-1" />
+                <span className="text-gold-600 font-bold text-xs uppercase tracking-wider">
+                  Start Mining
+                </span>
+              </>
+            )}
+          </motion.button>
+        </div>
 
-        {/* Mining Button */}
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          disabled={actionLoading}
-          onClick={isMining ? claimRewards : startMining}
-          className={`relative w-40 h-40 rounded-full flex flex-col items-center justify-center gap-2 transition-all duration-500 haptic-button ${
-            isMining
-              ? 'bg-gold-gradient mining-pulse shadow-lg shadow-gold-500/30'
-              : 'bg-white border border-dark-800 hover:border-gold-500/50 shadow-sm'
-          } ${actionLoading ? 'opacity-80' : ''}`}
-        >
-          {actionLoading ? (
-            <div className="relative flex items-center justify-center">
-              {/* Premium Rotating Ring */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-                className="w-14 h-14 rounded-full border-4 border-gold-500/10 border-t-gold-600 shadow-[0_0_15px_rgba(212,175,55,0.3)]"
-              />
-              {/* Pulsing Core */}
-              <motion.div
-                animate={{ 
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 1, 0.5]
-                }}
-                transition={{ duration: 1, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute flex items-center justify-center"
-              >
-                <Sparkles className="text-gold-600 drop-shadow-[0_0_8px_rgba(212,175,55,0.8)]" size={24} />
-              </motion.div>
-            </div>
-          ) : isMining ? (
-            <>
-              <Pickaxe className="w-10 h-10 text-dark-50 animate-mining" />
-              <span className="text-dark-50 font-bold text-xs uppercase tracking-wider">
-                Mining...
-              </span>
-              <span className="text-dark-50/80 text-[10px]">Tap to claim</span>
-            </>
-          ) : (
-            <>
-              <Play className="w-10 h-10 text-gold-600 ml-1" />
-              <span className="text-gold-600 font-bold text-xs uppercase tracking-wider">
-                Start Mining
-              </span>
-            </>
-          )}
-        </motion.button>
+        {/* Status Message (Outside the ring container) */}
+        {!isMining && !isSessionAvailable && (
+          <motion.p 
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-[10px] text-dark-500 font-bold uppercase tracking-widest mt-6 text-center"
+          >
+            {daysUntilNextSession === 1 
+              ? 'Next session available Tomorrow'
+              : daysUntilNextSession > 1 
+                ? `Next session: ${new Date(Date.now() + daysUntilNextSession * 24 * 60 * 60 * 1000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`
+                : 'Quota Reached. Next session pending...'}
+          </motion.p>
+        )}
 
         {/* Floating Particles */}
         <AnimatePresence>
@@ -331,7 +372,7 @@ export default function MiningPage() {
                <div>
                   <h3 className="text-sm font-bold text-dark-50">Gold Reserves</h3>
                   <p className="text-xl font-mono font-bold text-amber-500">₹{maturity.pendingValue.toFixed(2)}</p>
-                  <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider mt-0.5">Matures in 7 days</p>
+                  <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider mt-0.5">Ready to move to wallet</p>
                </div>
             </div>
 
@@ -350,15 +391,6 @@ export default function MiningPage() {
                 'Release to Wallet'
               )}
             </button>
-          </div>
-          
-          {/* Progress Indicator (Stylized) */}
-          <div className="mt-4 h-1 w-full bg-dark-900/20 rounded-full overflow-hidden">
-             <motion.div 
-               animate={{ x: ['-100%', '100%'] }} 
-               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-               className="h-full w-1/3 bg-amber-500/40 blur-[1px]"
-             />
           </div>
         </motion.div>
       )}

@@ -17,6 +17,11 @@ export default function useMining() {
   const pointsRef = useRef(0);
 
   const fetchStatus = useCallback(async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setError(null);
       const res = await fetch('/api/mining/status');
@@ -39,7 +44,9 @@ export default function useMining() {
       setTodayEarnings(data.todayEarnings || 0);
       setHasActivePlan(data.hasActivePlan || false);
     } catch (err) {
-      setError(err.message);
+      if (typeof navigator !== 'undefined' && navigator.onLine) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

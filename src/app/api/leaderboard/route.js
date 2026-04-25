@@ -27,14 +27,16 @@ export async function GET() {
       { name: 'Manoj T.', earnings: 9800, gold: 2.55, rank: 10, joinDate: 'Jun 2026' },
     ];
 
-    const realMiners = topWallets.map((w, index) => ({
-      name: w.user.fullName.split(' ')[0] + ' ' + (w.user.fullName.split(' ')[1]?.[0] || '') + '.',
-      earnings: w.totalCashEarned,
-      gold: w.totalGoldEarned,
-      rank: index + 1,
-      joinDate: new Date(w.user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
-      isReal: true
-    }));
+    const realMiners = topWallets
+      .filter(w => w.user && w.user.fullName)
+      .map((w, index) => ({
+        name: w.user.fullName.split(' ')[0] + ' ' + (w.user.fullName.split(' ')[1]?.[0] || '') + '.',
+        earnings: w.totalCashEarned,
+        gold: w.totalGoldEarned,
+        rank: index + 1,
+        joinDate: new Date(w.user.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+        isReal: true
+      }));
 
     // Merge logic: If we have real data, use it. If not enough, fill with dummies
     const miners = realMiners.length >= 10 
