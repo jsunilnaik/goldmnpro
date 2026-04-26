@@ -2,8 +2,8 @@ export const runtime = 'edge';
 
 const API_KEY = process.env.MONGODB_DATA_API_KEY;
 const API_URL = process.env.MONGODB_DATA_API_URL;
-const CLUSTER = process.env.MONGODB_CLUSTER;
-const DATABASE = process.env.MONGODB_DATABASE;
+const CLUSTER = process.env.MONGODB_CLUSTER || 'Cluster0';
+const DATABASE = process.env.MONGODB_DATABASE || 'goldmine-pro';
 
 async function atlasFetch(action, body) {
     if (!API_KEY || !API_URL) {
