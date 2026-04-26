@@ -83,19 +83,20 @@ export async function sendWithdrawalEmail(to, name, amount, status) {
   return sendEmail(to, `Withdrawal ${status} - ₹${amount.toLocaleString('en-IN')}`, emailTemplate(content, 'Withdrawal Update'));
 }
 
-export async function sendPasswordResetEmail(to, otp, name) {
+export async function sendPasswordResetEmail(to, resetUrl, name) {
   const content = `
-    <p style="color:#aaa;font-size:14px;">Hi ${name},</p>
-    <p style="color:#aaa;font-size:14px;">Use this code to reset your password:</p>
-    <div style="text-align:center;margin:24px 0;">
-      <span style="background:#EF4444;color:#fff;font-size:28px;font-weight:bold;letter-spacing:8px;padding:12px 24px;border-radius:12px;font-family:monospace;">
-        ${otp}
-      </span>
+    <p style="color:#aaa;font-size:14px;">Hi ${name || 'there'},</p>
+    <p style="color:#aaa;font-size:14px;">You requested to reset your password. Click the button below to proceed:</p>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${resetUrl}" style="background:linear-gradient(135deg,#FFD700,#FFA500);color:#0f0f1a;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;font-size:14px;box-shadow:0 4px 15px rgba(255,215,0,0.3);">
+        Reset Password
+      </a>
     </div>
-    <p style="color:#666;font-size:12px;">If you didn't request this, ignore this email.</p>
+    <p style="color:#666;font-size:12px;margin-top:24px;">This link will expire in 30 minutes. If you didn't request this, you can safely ignore this email.</p>
+    <p style="color:#444;font-size:10px;word-break:break-all;">Link: ${resetUrl}</p>
   `;
 
-  return sendEmail(to, 'Password Reset Code', emailTemplate(content, 'Reset Password'));
+  return sendEmail(to, 'Reset Your Password', emailTemplate(content, 'Password Reset'));
 }
 
 async function sendEmail(to, subject, html) {

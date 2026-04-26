@@ -139,6 +139,8 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: null,
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
