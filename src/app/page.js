@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';

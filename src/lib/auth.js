@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { verifyToken } from './jwt';
-import connectDB from './mongodb';
-import User from '@/models/User';
+import { db } from './atlas';
 
 export async function getAuthUser() {
   const cookieStore = await cookies();
@@ -10,17 +9,23 @@ export async function getAuthUser() {
   if (!token) return null;
 
   const decoded = await verifyToken(token);
-  if (!decoded) return null;
+  if (!decoded || !decoded.userId) return null;
 
-  await connectDB();
-  const user = await User.findById(decoded.userId)
-    .select('-password -otp')
-    .populate('currentPlan')
-    .lean();
+  // Use the Edge-compatible Data API driver
+  try {
+    const user = await db.findById('users', decoded.userId);
 
-  if (!user || !user.isActive) return null;
+    if (!user || user.isActive === false) return null;
 
-  return user;
+    // Remove sensitive fields
+    delete user.password;
+    delete user.otp;
+
+    return user;
+  } catch (error) {
+    console.error('Auth check error:', error);
+    return null;
+  }
 }
 
 export async function requireAuth() {

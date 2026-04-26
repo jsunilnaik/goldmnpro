@@ -6,6 +6,10 @@ const CLUSTER = process.env.MONGODB_CLUSTER;
 const DATABASE = process.env.MONGODB_DATABASE;
 
 async function atlasFetch(action, body) {
+    if (!API_KEY || !API_URL) {
+        throw new Error('MongoDB Data API credentials missing in environment variables');
+    }
+
     const response = await fetch(`${API_URL}/action/${action}`, {
         method: 'POST',
         headers: {
@@ -18,13 +22,31 @@ async function atlasFetch(action, body) {
             ...body,
         }),
     });
-    return await response.json();
+    
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    return data;
 }
 
 export const db = {
-    findOne: (collection, filter) => atlasFetch('findOne', { collection, filter }),
-    find: (collection, filter) => atlasFetch('find', { collection, filter }),
-    insertOne: (collection, document) => atlasFetch('insertOne', { collection, document }),
-    updateOne: (collection, filter, update) => atlasFetch('updateOne', { collection, filter, update }),
-    // Add other methods as needed...
+    findOne: async (collection, filter) => {
+        const res = await atlasFetch('findOne', { collection, filter });
+        return res.document;
+    },
+    find: async (collection, filter, sort = {}, limit = 100) => {
+        const res = await atlasFetch('find', { collection, filter, sort, limit });
+        return res.documents;
+    },
+    insertOne: async (collection, document) => {
+        const res = await atlasFetch('insertOne', { collection, document });
+        return res.insertedId;
+    },
+    updateOne: async (collection, filter, update, upsert = false) => {
+        const res = await atlasFetch('updateOne', { collection, filter, update, upsert });
+        return res;
+    },
+    findById: async (collection, id) => {
+        const res = await atlasFetch('findOne', { collection, filter: { _id: { "$oid": id } } });
+        return res.document;
+    }
 };
