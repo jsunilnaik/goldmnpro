@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { Inter, Poppins, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Toaster } from 'react-hot-toast';
