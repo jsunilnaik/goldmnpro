@@ -7,22 +7,25 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 
 [vars]
-# Add your environment variables here for deployment
-# Values should be set in the Cloudflare Dashboard for security
 NEXT_PUBLIC_APP_NAME = "GoldMine Pro"
-NEXT_PUBLIC_APP_URL = "http://localhost:3000"
+NEXT_PUBLIC_APP_URL = "https://goldmnpro.oksn761.workers.dev"
+NEXT_PUBLIC_UPI_ID = "snulnaik@ibl"
+NEXT_PUBLIC_DEV_MODE = "false"
+NEXT_PUBLIC_WITHDRAWAL_DATE = "daily"
 JWT_EXPIRES_IN = "7d"
 MINING_INTERVAL_HOURS = "1"
-BASE_MINING_RATE = "0.001"
-WITHDRAWAL_DATE = "1"
+BASE_MINING_RATE = "1.99"
+WITHDRAWAL_DATE = "daily"
+WITHDRAWAL_WINDOW_DAYS = "30"
 MIN_WITHDRAWAL_AMOUNT = "500"
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = "587"
+ADMIN_EMAIL = "admin@goldminepro.com"
 
-# Secret variables (Database, JWT Secret, API Keys) 
-# Should NOT be committed here. Set them in Cloudflare Pages Dashboard:
+# Secret variables - set via `npx wrangler secret put <NAME>`:
 # MONGODB_URI
 # JWT_SECRET
-# RAZORPAY_KEY_ID
-# RAZORPAY_KEY_SECRET
 # SMTP_USER
 # SMTP_PASS
 # CRON_SECRET
+# ADMIN_PASSWORD
