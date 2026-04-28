@@ -1,38 +1,32 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { db } from '@/lib/atlas';
+import connectDB from '@/lib/mongodb';
+import User from '@/models/User';
+import Wallet from '@/models/Wallet';
+import Location from '@/models/Location';
 import { requireAuth } from '@/lib/auth';
+import bcrypt from 'bcryptjs';
 
 export async function GET(request) {
   try {
+    await connectDB();
     const authUser = await requireAuth();
     
-    // Fetch user and wallet in parallel
-    const [user, wallet] = await Promise.all([
-      db.findById('users', authUser._id),
-      db.findOne('wallets', { user: { "$oid": authUser._id } })
-    ]);
+    // Fetch user and wallet
+    const user = await User.findById(authUser._id).populate({
+      path: 'currentPlan',
+      populate: { path: 'plan' }
+    });
+    
+    const wallet = await Wallet.findOne({ user: authUser._id });
 
     if (!user) {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
-    // Manual population of the Plan if it exists
-    if (user.currentPlan) {
-        const subId = user.currentPlan.$oid || user.currentPlan;
-        const subscription = await db.findById('subscriptions', subId);
-        if (subscription && subscription.plan) {
-            const planId = subscription.plan.$oid || subscription.plan;
-            subscription.plan = await db.findById('plans', planId);
-            user.currentPlan = subscription;
-        }
-    }
-
-    // REGION BLOCK CHECK (Simplified for Edge)
+    // REGION BLOCK CHECK
     let isBlocked = false;
     if (user.role !== 'admin' && user.city && user.state) {
-        const location = await db.findOne('locations', { city: user.city, state: user.state });
+        const location = await Location.findOne({ city: user.city, state: user.state });
         if (location && location.isActive === false) {
             isBlocked = true;
         }
@@ -49,8 +43,14 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
+    await connectDB();
     const authUser = await requireAuth();
     const body = await request.json();
+    const user = await User.findById(authUser._id);
+
+    if (!user) {
+        return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
 
     switch (body.action) {
       case 'add_payment': {
@@ -74,14 +74,9 @@ export async function PUT(request) {
           paymentMethod.accountHolderName = body.accountHolderName;
         }
 
-        // Fetch current user to check payment methods length
-        const user = await db.findById('users', authUser._id);
         paymentMethod.isPrimary = !user.paymentMethods || user.paymentMethods.length === 0;
-
-        await db.updateOne('users', 
-            { _id: { "$oid": authUser._id } }, 
-            { "$push": { "paymentMethods": paymentMethod } }
-        );
+        user.paymentMethods.push(paymentMethod);
+        await user.save();
         break;
       }
 
@@ -90,55 +85,42 @@ export async function PUT(request) {
           return NextResponse.json({ message: 'PAN and Aadhar required' }, { status: 400 });
         }
 
-        await db.updateOne('users', 
-            { _id: { "$oid": authUser._id } }, 
-            { 
-                "$set": { 
-                    "kyc.panNumber": body.panNumber,
-                    "kyc.aadharNumber": body.aadharNumber,
-                    "kyc.status": "submitted"
-                } 
-            }
-        );
+        user.kyc = {
+            panNumber: body.panNumber,
+            aadharNumber: body.aadharNumber,
+            status: 'submitted'
+        };
+        await user.save();
         break;
       }
 
       case 'change_password': {
-        const user = await db.findOne('users', { _id: { "$oid": authUser._id } });
-        const isValid = await bcrypt.compare(body.currentPassword, user.password);
+        const userWithPass = await User.findById(user._id).select('+password');
+        const isValid = await userWithPass.comparePassword(body.currentPassword);
         if (!isValid) {
           return NextResponse.json({ message: 'Current password is incorrect' }, { status: 400 });
         }
 
-        const hashed = await bcrypt.hash(body.newPassword, 12);
-        await db.updateOne('users', 
-            { _id: { "$oid": authUser._id } }, 
-            { "$set": { "password": hashed } }
-        );
+        userWithPass.password = body.newPassword;
+        await userWithPass.save();
         break;
       }
 
       default: {
         // Regular profile update
-        const updateData = {};
-        if (body.fullName) updateData.fullName = body.fullName;
-        if (body.state !== undefined) updateData.state = body.state;
-        if (body.city !== undefined) updateData.city = body.city;
-        if (body.tier !== undefined) updateData.tier = body.tier;
+        if (body.fullName) user.fullName = body.fullName;
+        if (body.state !== undefined) user.state = body.state;
+        if (body.city !== undefined) user.city = body.city;
+        if (body.tier !== undefined) user.tier = body.tier;
         
-        await db.updateOne('users', 
-            { _id: { "$oid": authUser._id } }, 
-            { "$set": updateData }
-        );
+        await user.save();
         break;
       }
     }
 
-    // Return updated user
-    const updatedUser = await db.findById('users', authUser._id);
     return NextResponse.json({
       message: 'Profile updated successfully',
-      user: updatedUser,
+      user: user,
     });
   } catch (error) {
     console.error('Profile update error:', error);

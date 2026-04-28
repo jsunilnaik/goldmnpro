@@ -1,23 +1,21 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/atlas';
+import connectDB from '@/lib/mongodb';
+import AdminConfig from '@/models/AdminConfig';
+import Plan from '@/models/Plan';
 import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request) {
   try {
+    await connectDB();
     await requireAdmin();
     
-    // Fetch all configs
-    const configs = await db.find('adminconfigs', {});
-    const plans = await db.find('plans', {}, { price: 1 });
+    const configs = await AdminConfig.find({});
+    const plans = await Plan.find({}).sort({ price: 1 });
 
-    // Format configs into a key-value map for the frontend
     const configMap = {};
-    if (Array.isArray(configs)) {
-        configs.forEach(c => {
-            if (c.key) configMap[c.key] = c.value;
-        });
-    }
+    configs.forEach(c => {
+        configMap[c.key] = c.value;
+    });
 
     return NextResponse.json({ configs: configMap, plans });
   } catch (error) {
@@ -30,26 +28,28 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const admin = await requireAdmin();
+    await connectDB();
+    await requireAdmin();
     const body = await request.json();
 
     switch (body.action) {
       case 'save_plan': {
-        const planData = {
-          name: body.name,
-          slug: body.slug || body.name.toLowerCase().replace(/\s+/g, '-'),
-          price: parseFloat(body.price),
-          duration: parseInt(body.duration),
-          miningRate: parseFloat(body.miningRate),
-          isActive: body.isActive !== false,
-          updatedAt: { "$date": new Date().toISOString() }
-        };
-
         if (body.planId) {
-          await db.updateOne('plans', { _id: { "$oid": body.planId } }, { "$set": planData });
+          await Plan.findByIdAndUpdate(body.planId, {
+            name: body.name,
+            price: parseFloat(body.price),
+            duration: parseInt(body.duration),
+            miningRate: parseFloat(body.miningRate),
+            isActive: body.isActive !== false
+          });
         } else {
-          planData.createdAt = { "$date": new Date().toISOString() };
-          await db.insertOne('plans', planData);
+          await Plan.create({
+            name: body.name,
+            price: parseFloat(body.price),
+            duration: parseInt(body.duration),
+            miningRate: parseFloat(body.miningRate),
+            isActive: body.isActive !== false
+          });
         }
         break;
       }
@@ -71,10 +71,10 @@ export async function POST(request) {
         const updatePromises = Object.entries(configs).map(async ([feKey, value]) => {
           const dbKey = keyMap[feKey];
           if (dbKey) {
-            return db.updateOne('adminconfigs', 
+            return AdminConfig.findOneAndUpdate(
                 { key: dbKey }, 
-                { "$set": { value, updatedAt: { "$date": new Date().toISOString() } } },
-                true // upsert
+                { value },
+                { upsert: true }
             );
           }
         });

@@ -1,11 +1,12 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/atlas';
+import connectDB from '@/lib/mongodb';
+import User from '@/models/User';
 import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request) {
   try {
+    await connectDB();
     const { email, password } = await request.json();
 
     if (!email || !password) {
@@ -15,8 +16,7 @@ export async function POST(request) {
       );
     }
 
-    // Find user via Data API
-    const user = await db.findOne('users', { email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
     if (!user) {
       return NextResponse.json(
@@ -25,28 +25,6 @@ export async function POST(request) {
       );
     }
 
-    // Check if account is locked
-    if (user.loginAttempts && user.loginAttempts.lockedUntil && new Date(user.loginAttempts.lockedUntil) > new Date()) {
-      const lockTimeMs = new Date(user.loginAttempts.lockedUntil) - new Date();
-      const lockMinutes = Math.max(1, Math.ceil(lockTimeMs / 60000));
-      return NextResponse.json(
-        { message: `Account is temporarily locked. Please try again in ${lockMinutes} minutes.` },
-        { status: 423 }
-      );
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      // Logic for incrementing failed attempts would go here via db.updateOne
-      return NextResponse.json(
-        { message: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Check if active
     if (user.isActive === false) {
       return NextResponse.json(
         { message: 'Account has been deactivated. Contact support.' },
@@ -54,19 +32,19 @@ export async function POST(request) {
       );
     }
 
-    // Reset login attempts and update last login
-    await db.updateOne('users', 
-        { _id: { "$oid": user._id } }, 
-        { 
-            "$set": { 
-                "loginAttempts": { count: 0, lastAttempt: null, lockedUntil: null },
-                "lastLogin": { "$date": new Date().toISOString() },
-                "lastLoginIP": request.headers.get('x-forwarded-for') || 'unknown'
-            } 
-        }
-    );
+    const isPasswordValid = await user.comparePassword(password);
+    if (!isPasswordValid) {
+      return NextResponse.json(
+        { message: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
 
-    // Generate token
+    // Update last login
+    user.lastLogin = new Date();
+    user.lastLoginIP = request.headers.get('x-forwarded-for') || 'unknown';
+    await user.save();
+
     const token = await signToken({ userId: user._id, role: user.role });
 
     const response = NextResponse.json({
@@ -85,7 +63,7 @@ export async function POST(request) {
 
     response.cookies.set('auth-token', token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',

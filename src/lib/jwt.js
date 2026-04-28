@@ -19,19 +19,21 @@ export async function signToken(payload) {
 export async function verifyToken(token) {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
+    console.log('✅ Token verified successfully. Payload:', payload);
 
     // Sanitize payload for existing sessions to prevent Cast to ObjectId errors
     if (payload.userId && typeof payload.userId !== 'string') {
-      // Handle the nested buffer object case from the error
       if (typeof payload.userId === 'object' && payload.userId.buffer) {
-        payload.userId = Buffer.from(Object.values(payload.userId.buffer)).toString('hex');
+        const buf = new Uint8Array(Object.values(payload.userId.buffer));
+        payload.userId = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('');
       } else {
-        payload.userId = payload.userId.toString();
+        payload.userId = String(payload.userId);
       }
     }
 
     return payload;
   } catch (error) {
+    console.error('❌ Token verification failed:', error.message);
     return null;
   }
 }

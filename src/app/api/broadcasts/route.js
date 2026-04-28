@@ -1,9 +1,9 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import Broadcast from '@/models/Broadcast';
 import User from '@/models/User';
 import { requireAuth } from '@/lib/auth';
+import { handleApiError } from '@/lib/api-error';
 
 export async function GET(request) {
   try {

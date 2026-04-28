@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import dns from 'dns';
 import User from '@/models/User';
 import Wallet from '@/models/Wallet';
 import MiningSession from '@/models/MiningSession';
@@ -7,12 +6,19 @@ import Subscription from '@/models/Subscription';
 import Plan from '@/models/Plan';
 import Review from '@/models/Review';
 
-// If USE_GOOGLE_DNS is set, override the default DNS servers for this process.
-if (process.env.USE_GOOGLE_DNS === 'true') {
-    dns.setServers(['8.8.8.8', '8.8.4.4']);
-}
-
 const MONGODB_URI = process.env.MONGODB_URI;
+
+async function setupDns() {
+    if (process.env.USE_GOOGLE_DNS === 'true' && process.env.NEXT_RUNTIME === 'nodejs') {
+        try {
+            const dns = await import('dns');
+            dns.setServers(['8.8.8.8', '8.8.4.4']);
+            console.log('🌐 Google DNS configured');
+        } catch (e) {
+            console.warn('⚠️ Failed to set Google DNS:', e.message);
+        }
+    }
+}
 
 /**
  * Manually resolves a mongodb+srv URI to a standard mongodb:// URI
@@ -27,6 +33,7 @@ async function resolveSrvToStandardUri(srvUri) {
         
         console.log(`🔍 Manually resolving SRV: ${srvHostname}`);
         
+        const dns = await import('dns');
         const addresses = await new Promise((resolve, reject) => {
             dns.resolveSrv(srvHostname, (err, addr) => {
                 if (err) reject(err);
@@ -69,6 +76,7 @@ async function connectDB() {
     }
 
     if (!cached.promise) {
+        await setupDns();
         const opts = {
             bufferCommands: false,
             maxPoolSize: 20,

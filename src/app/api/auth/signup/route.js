@@ -1,9 +1,10 @@
-export const runtime = 'edge';
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/atlas';
+import connectDB from '@/lib/mongodb';
+import User from '@/models/User';
+import Wallet from '@/models/Wallet';
+import Location from '@/models/Location';
 import { signToken } from '@/lib/jwt';
 import { z } from 'zod';
-import bcrypt from 'bcryptjs';
 
 const signupSchema = z.object({
   fullName: z.string().min(2).max(50),
@@ -18,11 +19,12 @@ const signupSchema = z.object({
 
 export async function POST(request) {
   try {
+    await connectDB();
     const body = await request.json();
     const validated = signupSchema.parse(body);
 
-    // Check if user exists via Data API
-    const existingUser = await db.findOne('users', {
+    // Check if user exists
+    const existingUser = await User.findOne({
       $or: [
         { email: validated.email.toLowerCase() },
         { phone: validated.phone }
@@ -37,7 +39,7 @@ export async function POST(request) {
     }
 
     // Check if city is active
-    const location = await db.findOne('locations', { city: validated.city, state: validated.state });
+    const location = await Location.findOne({ city: validated.city, state: validated.state });
     if (location && location.isActive === false) {
       return NextResponse.json(
         { message: `GoldMine Pro is currently not available in ${validated.city}.` },
@@ -48,87 +50,59 @@ export async function POST(request) {
     // Handle referral
     let referredByUserId = null;
     if (validated.referralCode) {
-      const referredByUser = await db.findOne('users', { referralCode: validated.referralCode });
+      const referredByUser = await User.findOne({ referralCode: validated.referralCode });
       if (referredByUser) {
-        referredByUserId = { "$oid": referredByUser._id };
+        referredByUserId = referredByUser._id;
       }
     }
 
-    // Manual referral code generation
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let myReferralCode = 'GM';
-    for (let i = 0; i < 6; i++) {
-        myReferralCode += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-
-    // Generate OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Create user object
-    const newUser = {
+    // Create user
+    const user = await User.create({
       fullName: validated.fullName,
       email: validated.email.toLowerCase(),
       phone: validated.phone,
-      password: await bcrypt.hash(validated.password, 12),
-      referralCode: myReferralCode,
+      password: validated.password,
       referredBy: referredByUserId,
-      city: validated.city || null,
-      state: validated.state || null,
-      tier: validated.tier || null,
-      role: 'user',
-      isActive: true,
-      isEmailVerified: false,
-      isPhoneVerified: false,
-      isKYCVerified: false,
-      referralCount: 0,
-      referralEarnings: 0,
-      paymentMethods: [],
-      otp: {
-        code: otpCode,
-        expiresAt: { "$date": new Date(Date.now() + 10 * 60 * 1000).toISOString() },
-        attempts: 0
-      },
-      createdAt: { "$date": new Date().toISOString() },
-      updatedAt: { "$date": new Date().toISOString() }
-    };
-
-    const userId = await db.insertOne('users', newUser);
-
-    // Create wallet
-    await db.insertOne('wallets', {
-        user: { "$oid": userId },
-        balance: 0,
-        totalEarnings: 0,
-        createdAt: { "$date": new Date().toISOString() }
+      city: validated.city,
+      state: validated.state,
+      tier: validated.tier || 1,
     });
 
+    // Generate OTP
+    const otp = user.generateOTP();
+    await user.save();
+    console.log(`OTP for ${user.phone}: ${otp}`);
+
+    // Create wallet
+    await Wallet.create({ user: user._id });
+
     // Update Location Count
-    await db.updateOne('locations', 
+    await Location.findOneAndUpdate(
         { city: validated.city, state: validated.state },
         { 
-          "$inc": { "userCount": 1 },
-          "$set": { "tier": validated.tier || 1 }
+          $inc: { userCount: 1 },
+          $set: { tier: validated.tier || 1 }
         },
-        true // upsert
+        { upsert: true }
     );
 
     // Generate token
-    const token = await signToken({ userId: userId, role: 'user' });
+    const token = await signToken({ userId: user._id, role: user.role });
 
     const response = NextResponse.json({
       message: 'Account created successfully',
       user: {
-        id: userId,
-        fullName: newUser.fullName,
-        email: newUser.email,
-        phone: newUser.phone,
-        referralCode: newUser.referralCode,
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        referralCode: user.referralCode,
       },
     }, { status: 201 });
 
     response.cookies.set('auth-token', token, {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60,
       path: '/',
