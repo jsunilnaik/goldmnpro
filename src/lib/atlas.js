@@ -1,4 +1,3 @@
-export const runtime = 'edge';
 
 const API_KEY = process.env.MONGODB_DATA_API_KEY;
 const API_URL = process.env.MONGODB_DATA_API_URL;

@@ -1,8 +1,11 @@
 node_modules
-graphify-out
-.wrangler
 .next
+.open-next
+.wrangler
 .gemini
 .graphifyignore
+graphify-out
+.env
 .env.local
-.gemini
+.env.production
+scratch
