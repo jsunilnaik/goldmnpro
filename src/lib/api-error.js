@@ -25,12 +25,15 @@ export function handleApiError(error, customLoggerPrefix = 'API Error') {
     status = 409;
   }
 
+  // Safe check for process.env to prevent Edge Runtime crashes
+  const isDev = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'development';
+  
   return NextResponse.json(
     { 
       success: false,
       message: message,
       error: message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: isDev ? error.stack : undefined,
       timestamp: new Date().toISOString()
     },
     { status }

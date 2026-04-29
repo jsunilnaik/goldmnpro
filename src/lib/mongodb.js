@@ -5,15 +5,22 @@ import mongoose from 'mongoose';
  * Optimized for Cloudflare Workers & Next.js
  */
 
-// Global cache for connection persistence
+// Safe retrieval of environment variables
+const getEnv = (key) => {
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
+// Global cache for connection persistence using a safe globalThis reference
+if (!globalThis.mongoose) {
+  globalThis.mongoose = { conn: null, promise: null };
+}
 let cached = globalThis.mongoose;
 
-if (!cached) {
-  cached = globalThis.mongoose = { conn: null, promise: null };
-}
-
 async function connectDB() {
-  const MONGODB_URI = process.env.MONGODB_URI;
+  const MONGODB_URI = getEnv('MONGODB_URI');
 
   if (!MONGODB_URI) {
     console.error('❌ MONGODB_URI is missing from process.env');
