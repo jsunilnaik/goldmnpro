@@ -5,12 +5,6 @@ import mongoose from 'mongoose';
  * Optimized for Cloudflare Workers & Next.js
  */
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.error('❌ CRITICAL: MONGODB_URI is not defined in environment variables');
-}
-
 // Global cache for connection persistence
 let cached = globalThis.mongoose;
 
@@ -19,7 +13,10 @@ if (!cached) {
 }
 
 async function connectDB() {
+  const MONGODB_URI = process.env.MONGODB_URI;
+
   if (!MONGODB_URI) {
+    console.error('❌ MONGODB_URI is missing from process.env');
     throw new Error('Database connection failed: MONGODB_URI is missing');
   }
 

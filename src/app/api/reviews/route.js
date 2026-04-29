@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
 import Review from '@/models/Review';
+import { handleApiError } from '@/lib/api-error';
 
 export async function GET() {
   try {
@@ -9,10 +10,7 @@ export async function GET() {
     const reviews = await Review.find().sort({ date: -1 }).lean();
     return NextResponse.json({ reviews });
   } catch (error) {
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Reviews GET Error');
   }
 }
 
@@ -42,9 +40,6 @@ export async function POST(request) {
     }, { status: 201 });
 
   } catch (error) {
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : 500 }
-    );
+    return handleApiError(error, 'Reviews POST Error');
   }
 }

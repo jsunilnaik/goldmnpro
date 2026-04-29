@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import MediaContent from '@/models/MediaContent';
+import { handleApiError } from '@/lib/api-error';
 
 export async function GET() {
   try {
@@ -11,10 +12,6 @@ export async function GET() {
 
     return NextResponse.json({ media });
   } catch (error) {
-    console.error('Failed to fetch media:', error);
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Media GET Error');
   }
 }
