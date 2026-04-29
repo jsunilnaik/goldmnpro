@@ -33,7 +33,13 @@ export async function getAuthUser() {
     const { password, otp, ...safeUser } = user;
     return { ...safeUser, _id: user._id.toString() };
   } catch (error) {
-    console.error('Auth check error:', error);
+    if (error.message.includes('MONGODB_URI')) {
+      console.error('❌ Auth Check Error: Database configuration missing (MONGODB_URI)');
+    } else if (error.name === 'MongooseServerSelectionError') {
+      console.error('❌ Auth Check Error: Database connection timeout/failed');
+    } else {
+      console.error('❌ Auth check unexpected error:', error.message);
+    }
     return null;
   }
 }

@@ -29,8 +29,10 @@ export function AuthProvider({ children }) {
       } else {
         setUser(null);
         setWallet(null);
+        console.warn('Profile fetch failed:', res.status, res.statusText);
       }
     } catch (error) {
+      console.error('Profile fetch error:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -58,10 +60,12 @@ export function AuthProvider({ children }) {
         router.push('/dashboard');
         return { success: true };
       } else {
+        console.error('Login failed:', data.message);
         toast.error(data.message || 'Login failed');
         return { success: false, message: data.message };
       }
     } catch (error) {
+      console.error('Login network error:', error);
       toast.error('Network error. Please try again.');
       return { success: false, message: 'Network error' };
     }

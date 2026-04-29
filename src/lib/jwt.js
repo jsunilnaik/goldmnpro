@@ -1,9 +1,13 @@
 import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-fallback-secret-for-dev');
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
-
 export async function signToken(payload) {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    console.warn('⚠️ JWT_SECRET is not defined. Using fallback secret.');
+  }
+  const JWT_SECRET = new TextEncoder().encode(secret || 'your-fallback-secret-for-dev');
+  const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+
   // Ensure userId is a string to prevent Cast to ObjectId errors
   if (payload.userId && typeof payload.userId !== 'string') {
     payload.userId = payload.userId.toString();
@@ -17,6 +21,9 @@ export async function signToken(payload) {
 }
 
 export async function verifyToken(token) {
+  const secret = process.env.JWT_SECRET;
+  const JWT_SECRET = new TextEncoder().encode(secret || 'your-fallback-secret-for-dev');
+  
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     console.log('✅ Token verified successfully. Payload:', payload);

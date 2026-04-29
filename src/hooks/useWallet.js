@@ -25,6 +25,7 @@ export default function useWallet() {
       setWallet(data.wallet);
     } catch (err) {
       if (typeof navigator !== 'undefined' && navigator.onLine) {
+        console.error('Wallet fetch error:', err.message);
         setError(err.message);
       }
     } finally {

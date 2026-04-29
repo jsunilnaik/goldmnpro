@@ -1,13 +1,13 @@
-const SMS_API_KEY = process.env.SMS_API_KEY;
-const SMS_SENDER_ID = process.env.SMS_SENDER_ID || 'GLDMNE';
-const SMS_PROVIDER = process.env.SMS_PROVIDER || 'console'; // console | msg91 | twilio
-
 export async function sendSMS(phone, message) {
+  const SMS_API_KEY = process.env.SMS_API_KEY;
+  const SMS_SENDER_ID = process.env.SMS_SENDER_ID || 'GLDMNE';
+  const SMS_PROVIDER = process.env.SMS_PROVIDER || 'console'; // console | msg91 | twilio
+
   const formattedPhone = phone.startsWith('+91') ? phone : `+91${phone}`;
 
   switch (SMS_PROVIDER) {
     case 'msg91':
-      return sendViaMSG91(formattedPhone, message);
+      return sendViaMSG91(formattedPhone, message, SMS_API_KEY, SMS_SENDER_ID);
     case 'twilio':
       return sendViaTwilio(formattedPhone, message);
     default:
@@ -37,16 +37,16 @@ async function sendViaConsole(phone, message) {
 }
 
 // MSG91
-async function sendViaMSG91(phone, message) {
+async function sendViaMSG91(phone, message, apiKey, senderId) {
   try {
     const response = await fetch('https://api.msg91.com/api/v5/flow/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'authkey': SMS_API_KEY,
+        'authkey': apiKey,
       },
       body: JSON.stringify({
-        sender: SMS_SENDER_ID,
+        sender: senderId,
         route: '4',
         country: '91',
         sms: [{ message, to: [phone.replace('+91', '')] }],
