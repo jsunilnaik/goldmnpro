@@ -1,14 +1,17 @@
 import mongoose from 'mongoose';
 
 /**
- * DATABASE CONNECTION MANAGER
- * 
- * This module handles database connectivity across different environments:
- * 1. Node.js (Development) - Uses global caching for HMR stability and DNS fixes for Atlas.
- * 2. Cloudflare Workers (Production) - Uses edge-compatible logic and optimized timeouts.
+ * PRODUCTION-READY DATABASE CONNECTION
+ * Optimized for Cloudflare Workers & Next.js
  */
 
-// Global cache to prevent multiple connections during dev HMR and optimize worker warm starts
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('❌ CRITICAL: MONGODB_URI is not defined in environment variables');
+}
+
+// Global cache for connection persistence
 let cached = globalThis.mongoose;
 
 if (!cached) {
@@ -16,77 +19,53 @@ if (!cached) {
 }
 
 async function connectDB() {
-  const MONGODB_URI = process.env.MONGODB_URI;
-
   if (!MONGODB_URI) {
-    console.error('❌ MONGODB_URI is missing!');
-    throw new Error('MONGODB_URI_MISSING');
+    throw new Error('Database connection failed: MONGODB_URI is missing');
   }
 
-  // 1. DNS FIX (Node.js environments only)
-  // This resolves querySrv ECONNREFUSED issues on local networks
-  if (typeof process !== 'undefined' && process.release?.name === 'node') {
-    try {
-      const dns = await import('dns');
-      if (dns && typeof dns.setServers === 'function') {
-        dns.setServers(['8.8.8.8', '8.8.4.4']);
-      }
-    } catch (e) {
-      // dns module not available or failed (expected in some environments)
-    }
-  }
-
-  // 2. CONNECTION CACHING
+  // Use existing connection if available
   if (cached.conn || mongoose.connection.readyState === 1) {
     if (!cached.conn) cached.conn = mongoose.connection;
     return cached.conn;
   }
 
-  // 3. PENDING CONNECTION HANDLING
+  // If a connection is already being established, wait for it
   if (cached.promise) {
-    console.log('⌛ DB connection in progress, waiting...');
     try {
       cached.conn = await cached.promise;
       return cached.conn;
     } catch (e) {
-      cached.promise = null; // Reset on failure
+      cached.promise = null;
       throw e;
     }
   }
 
-  // 4. NEW CONNECTION INITIATION
+  // Connection options optimized for Serverless/Edge
   const opts = {
-    bufferCommands: true, // Allow Mongoose to buffer during the brief connection window
+    bufferCommands: true,
     maxPoolSize: 10,
-    minPoolSize: 0,
-    serverSelectionTimeoutMS: 15000,
+    serverSelectionTimeoutMS: 30000, // Increased to 30s for cold starts
     socketTimeoutMS: 45000,
-    connectTimeoutMS: 15000,
-    retryWrites: true, // Enabled for production stability
+    connectTimeoutMS: 30000,
+    heartbeatFrequencyMS: 10000,
+    retryWrites: true,
     retryReads: true,
   };
 
-  console.log('🔌 Initiating new DB connection...');
+  console.log('🔌 Connecting to MongoDB Atlas...');
   cached.promise = mongoose.connect(MONGODB_URI, opts)
     .then((m) => {
-      console.log('✅ DB connection established');
+      console.log('✅ MongoDB Connected Successfully');
       return m;
     })
     .catch((err) => {
-      console.error('❌ DB connection failed:', err.message);
+      console.error('❌ MongoDB Connection Error:', err.message);
       cached.promise = null;
       throw err;
     });
 
   try {
-    await cached.promise;
-    cached.conn = mongoose.connection;
-    
-    // Safety check for serverless environments
-    if (cached.conn.readyState !== 1) {
-      console.warn('⚠️ DB connection resolved but readyState is', cached.conn.readyState);
-    }
-    
+    cached.conn = await cached.promise;
     return cached.conn;
   } catch (e) {
     cached.promise = null;

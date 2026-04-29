@@ -27,9 +27,11 @@ export function handleApiError(error, customLoggerPrefix = 'API Error') {
 
   return NextResponse.json(
     { 
+      success: false,
       message: message,
       error: message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      timestamp: new Date().toISOString()
     },
     { status }
   );
