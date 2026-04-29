@@ -11,7 +11,7 @@ export function handleApiError(error, customLoggerPrefix = 'API Error') {
   const message = error.message || 'Internal server error';
   
   // Map specific error messages to HTTP status codes
-  let status = 500;
+  let status = error.status || 500;
   
   if (message.includes('Unauthorized') || message.includes('Authentication required')) {
     status = 401;
@@ -27,8 +27,9 @@ export function handleApiError(error, customLoggerPrefix = 'API Error') {
 
   return NextResponse.json(
     { 
-      message: status === 500 ? 'An unexpected error occurred' : message,
-      error: process.env.NODE_ENV === 'development' ? message : undefined
+      message: message,
+      error: message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     },
     { status }
   );
