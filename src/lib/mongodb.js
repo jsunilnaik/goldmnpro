@@ -13,6 +13,20 @@ const getEnv = (key) => {
   return undefined;
 };
 
+// DNS FIX for Atlas SRV records (Node.js environments only)
+if (typeof process !== 'undefined' && process.versions?.node) {
+  try {
+    // Dynamic import to avoid bundler issues in Edge
+    import('dns').then(dns => {
+      if (dns && typeof dns.setServers === 'function') {
+        dns.setServers(['8.8.8.8', '8.8.4.4']);
+      }
+    }).catch(() => {});
+  } catch (e) {
+    // Ignore errors in non-node environments
+  }
+}
+
 // Global cache for connection persistence using a safe globalThis reference
 if (!globalThis.mongoose) {
   globalThis.mongoose = { conn: null, promise: null };
