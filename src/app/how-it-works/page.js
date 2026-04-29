@@ -19,7 +19,7 @@ import {
 export default function HowItWorksPage() {
    const steps = [
       {
-         title: "Create Account@@@",
+         title: "Create Account",
          desc: "Sign up in seconds with your phone number and email. No 24-hour waiting periods—you're in instantly.",
          icon: Smartphone,
          color: "bg-blue-500/10 text-blue-500"
