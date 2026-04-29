@@ -49,7 +49,6 @@ const withPWA = require('next-pwa')({
       handler: 'NetworkOnly',
       options: {
         cacheName: 'apis',
-        networkTimeoutSeconds: 10,
       },
     },
   ],
