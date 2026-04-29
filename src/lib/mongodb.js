@@ -5,6 +5,10 @@ import MiningSession from '@/models/MiningSession';
 import Subscription from '@/models/Subscription';
 import Plan from '@/models/Plan';
 import Review from '@/models/Review';
+import Transaction from '@/models/Transaction';
+import Broadcast from '@/models/Broadcast';
+import Location from '@/models/Location';
+import Notification from '@/models/Notification';
 
 let cached = global.mongoose;
 
@@ -26,19 +30,25 @@ async function connectDB() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
-            maxPoolSize: 5,
-            minPoolSize: 1,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 30000,
-            connectTimeoutMS: 5000,
-            family: 4,
-            retryWrites: true,
+            maxPoolSize: 1, // Reduced for serverless
+            minPoolSize: 0,
+            serverSelectionTimeoutMS: 8000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000,
+            retryWrites: false, // Changed from true
+            retryReads: true,
         };
 
+        console.log('📡 Attempting MongoDB connection...');
         const start = Date.now();
-        console.log('📡 Starting MongoDB connection attempt...');
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts)
+        // Hard timeout for connection promise to prevent worker hang
+        const connectionPromise = mongoose.connect(MONGODB_URI, opts);
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('MongoDB connection timeout after 10s')), 10000)
+        );
+
+        cached.promise = Promise.race([connectionPromise, timeoutPromise])
             .then((mongoose) => {
                 console.log(`✅ MongoDB connected successfully in ${Date.now() - start}ms`);
                 return mongoose;

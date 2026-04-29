@@ -32,9 +32,6 @@ export async function GET(request) {
       currentPage: page,
     });
   } catch (error) {
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : 500 }
-    );
+    return handleApiError(error, 'Wallet History Error');
   }
 }

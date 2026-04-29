@@ -17,9 +17,6 @@ export async function GET(request) {
 
     return NextResponse.json({ wallet });
   } catch (error) {
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : 500 }
-    );
+    return handleApiError(error, 'Wallet GET Error');
   }
 }

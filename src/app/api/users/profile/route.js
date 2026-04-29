@@ -5,6 +5,9 @@ import Wallet from '@/models/Wallet';
 import Location from '@/models/Location';
 import { requireAuth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { handleApiError } from '@/lib/api-error';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
@@ -34,10 +37,7 @@ export async function GET(request) {
 
     return NextResponse.json({ user, wallet, isBlocked });
   } catch (error) {
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: error.message === 'Unauthorized' ? 401 : 500 }
-    );
+    return handleApiError(error, 'Profile GET Error');
   }
 }
 
@@ -123,10 +123,6 @@ export async function PUT(request) {
       user: user,
     });
   } catch (error) {
-    console.error('Profile update error:', error);
-    return NextResponse.json(
-      { message: error.message || 'Internal server error' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Profile PUT Error');
   }
 }

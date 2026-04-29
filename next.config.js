@@ -46,10 +46,9 @@ const withPWA = require('next-pwa')({
     },
     {
       urlPattern: /\/api\/.*$/i,
-      handler: 'NetworkFirst',
+      handler: 'NetworkOnly',
       options: {
         cacheName: 'apis',
-        expiration: { maxEntries: 16, maxAgeSeconds: 24 * 60 * 60 },
         networkTimeoutSeconds: 10,
       },
     },
