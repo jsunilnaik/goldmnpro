@@ -1,7 +1,21 @@
 import mongoose from 'mongoose';
+import dns from 'dns';
 
-// Per-isolate cache for Cloudflare Workers
-let cachedPromise = null;
+// Force Google DNS to resolve MongoDB SRV records (prevents ECONNREFUSED on some networks)
+if (dns && typeof dns.setServers === 'function') {
+  try {
+    dns.setServers(['8.8.8.8', '8.8.4.4']);
+  } catch (e) {
+    console.warn('⚠️ Failed to set DNS servers:', e.message);
+  }
+}
+
+// Use global for caching in development to prevent multiple connections during HMR
+let cached = global.mongoose;
+
+if (!cached) {
+    cached = global.mongoose = { conn: null, promise: null };
+}
 
 async function connectDB() {
     const MONGODB_URI = process.env.MONGODB_URI;
@@ -12,37 +26,59 @@ async function connectDB() {
     }
 
     // If already connected, return the connection
-    if (mongoose.connection.readyState >= 1) {
-        return mongoose.connection;
+    if (cached.conn || mongoose.connection.readyState === 1) {
+        if (!cached.conn) cached.conn = mongoose.connection;
+        return cached.conn;
     }
 
-    if (!cachedPromise) {
-        const opts = {
-            bufferCommands: false,
-            maxPoolSize: 1,
-            minPoolSize: 0,
-            serverSelectionTimeoutMS: 8000,
-            socketTimeoutMS: 45000,
-            connectTimeoutMS: 8000,
-            retryWrites: false,
-            retryReads: true,
-        };
-
-        cachedPromise = mongoose.connect(MONGODB_URI, opts)
-            .then((m) => {
-                return m;
-            })
-            .catch((err) => {
-                cachedPromise = null;
-                throw err;
-            });
+    // If a connection is already being established, wait for it
+    if (cached.promise) {
+        console.log('⌛ DB connection already in progress, waiting...');
+        try {
+            cached.conn = await cached.promise;
+            return cached.conn;
+        } catch (e) {
+            cached.promise = null; // Reset on failure
+            throw e;
+        }
     }
+
+    // If we reach here, no connection and no promise exists
+    const opts = {
+        bufferCommands: true, // Set to true to avoid the "initial connection" errors
+        maxPoolSize: 10,
+        minPoolSize: 0,
+        serverSelectionTimeoutMS: 10000,
+        socketTimeoutMS: 45000,
+        connectTimeoutMS: 10000,
+        retryWrites: false,
+        retryReads: true,
+    };
+
+    console.log('🔌 Initiating new DB connection...');
+    cached.promise = mongoose.connect(MONGODB_URI, opts)
+        .then((m) => {
+            console.log('✅ DB connection established');
+            return m;
+        })
+        .catch((err) => {
+            console.error('❌ DB connection failed:', err.message);
+            cached.promise = null;
+            throw err;
+        });
 
     try {
-        await cachedPromise;
-        return mongoose.connection;
+        await cached.promise;
+        cached.conn = mongoose.connection;
+        
+        // Final safety check
+        if (cached.conn.readyState !== 1) {
+            console.warn('⚠️ DB connection resolved but readyState is', cached.conn.readyState);
+        }
+        
+        return cached.conn;
     } catch (e) {
-        cachedPromise = null;
+        cached.promise = null;
         throw e;
     }
 }

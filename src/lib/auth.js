@@ -37,8 +37,14 @@ export async function getAuthUser() {
       console.error('❌ Auth Check Error: Database configuration missing (MONGODB_URI)');
     } else if (error.name === 'MongooseServerSelectionError') {
       console.error('❌ Auth Check Error: Database connection timeout/failed');
+    } else if (error.message.includes('initial connection is complete')) {
+      console.error('❌ Auth Check Error: Mongoose connection race condition detected');
     } else {
-      console.error('❌ Auth check unexpected error:', error.message);
+      console.error('❌ Auth check unexpected error:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n')
+      });
     }
     return null;
   }
