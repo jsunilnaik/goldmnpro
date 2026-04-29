@@ -48,9 +48,10 @@ async function connectDB() {
   const opts = {
     bufferCommands: true,
     maxPoolSize: 10,
-    serverSelectionTimeoutMS: 30000, // Increased to 30s for cold starts
+    serverSelectionTimeoutMS: 10000, // Reduced to 10s to prevent Cloudflare from killing the worker
     socketTimeoutMS: 45000,
-    connectTimeoutMS: 30000,
+    connectTimeoutMS: 10000,
+    waitQueueTimeoutMS: 5000,
     heartbeatFrequencyMS: 10000,
     retryWrites: true,
     retryReads: true,
