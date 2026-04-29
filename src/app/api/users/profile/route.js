@@ -3,6 +3,8 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import Wallet from '@/models/Wallet';
 import Location from '@/models/Location';
+import Subscription from '@/models/Subscription';
+import Plan from '@/models/Plan';
 import { requireAuth } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { handleApiError } from '@/lib/api-error';
