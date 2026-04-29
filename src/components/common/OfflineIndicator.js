@@ -7,17 +7,20 @@ import { useConnectivity } from '@/context/ConnectivityContext';
 
 export default function OfflineIndicator() {
   const { isOnline } = useConnectivity();
+  const [wasOffline, setWasOffline] = useState(false);
   const [showReconnected, setShowReconnected] = useState(false);
 
   useEffect(() => {
-    if (isOnline) {
+    if (!isOnline) {
+      setWasOffline(true);
+      setShowReconnected(false);
+    } else if (wasOffline) {
       setShowReconnected(true);
+      setWasOffline(false);
       const timer = setTimeout(() => setShowReconnected(false), 3000);
       return () => clearTimeout(timer);
-    } else {
-      setShowReconnected(false);
     }
-  }, [isOnline]);
+  }, [isOnline, wasOffline]);
 
   return (
     <AnimatePresence>
