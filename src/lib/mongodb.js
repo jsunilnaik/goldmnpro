@@ -1,22 +1,5 @@
 import mongoose from 'mongoose';
 
-// DNS FIX for Atlas SRV records (Node.js environments only)
-if (typeof process !== 'undefined' && process.versions?.node) {
-  try {
-    // Dynamic import to avoid bundler issues in Edge
-    import('dns').then(dns => {
-      if (dns && typeof dns.setServers === 'function') {
-        dns.setServers(['8.8.8.8', '8.8.4.4']);
-      }
-    }).catch(() => {});
-  } catch (e) {
-    // Ignore errors in non-node environments
-  }
-}
-
-
-
-
 
 // Use globalThis to maintain a cached connection across hot reloads and edge invocations
 let cached = globalThis.mongoose;
@@ -30,6 +13,19 @@ async function connectDB() {
 
   if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable');
+  }
+
+  // DNS FIX for Atlas SRV records (Node.js environments only)
+  // We await this to ensure DNS is configured before mongoose tries to connect
+  if (typeof process !== 'undefined' && process.versions?.node) {
+    try {
+      const dns = await import('dns');
+      if (dns && typeof dns.setServers === 'function') {
+        dns.setServers(['8.8.8.8', '8.8.4.4']);
+      }
+    } catch (e) {
+      // Ignore errors in non-node environments
+    }
   }
 
   if (cached.conn) {
