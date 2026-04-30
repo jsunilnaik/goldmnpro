@@ -5,7 +5,7 @@
   "description": "Digital Gold Mining Platform - Mine, Earn & Withdraw",
   "start_url": "/dashboard",
   "display": "standalone",
-  "display_override": ["standalone", "window-controls-overlay"],
+  "display_override": ["standalone", "window-controls-overlay", "tabbed"],
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#FFD700",
@@ -14,8 +14,15 @@
   "scope": "/",
   "handle_links": "auto",
   "categories": ["finance", "business"],
+  "iarc_rating_id": "AC0-0",
   "prefer_related_applications": false,
-  "related_applications": [],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=com.goldminepro.app",
+      "id": "com.goldminepro.app"
+    }
+  ],
   "icons": [
     { "src": "/icons/icon-72x72.png", "sizes": "72x72", "type": "image/png", "purpose": "any maskable" },
     { "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png", "purpose": "any maskable" },
@@ -27,22 +34,87 @@
     { "src": "/icons/icon-512x512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "screenshots": [
-    { "src": "/screenshots/dashboard.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/screenshots/mining.png", "sizes": "390x844", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/screenshots/desktop.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide" }
+    {
+      "src": "/screenshots/dashboard.png",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "GoldMine Pro Dashboard"
+    },
+    {
+      "src": "/screenshots/mining.png",
+      "sizes": "1024x1024",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "Live Mining"
+    },
+    {
+      "src": "/screenshots/desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "GoldMine Pro Desktop"
+    }
   ],
   "shortcuts": [
     {
       "name": "Start Mining",
       "short_name": "Mine",
       "url": "/mining",
-      "icons": [{ "src": "/icons/mining-shortcut.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/mining-shortcut.png", "sizes": "1024x1024", "type": "image/png" }]
     },
     {
       "name": "My Wallet",
       "short_name": "Wallet",
       "url": "/wallet",
-      "icons": [{ "src": "/icons/wallet-shortcut.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icons/wallet-shortcut.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "share_target": {
+    "action": "/dashboard",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "scope_extensions": [
+    { "origin": "https://goldmnpro.onrender.com" }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 480
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+goldmine",
+      "url": "/dashboard?url=%s"
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "/mining"
+  },
+  "widgets": [
+    {
+      "name": "Mining Stats",
+      "short_name": "Stats",
+      "description": "Check your current mining progress",
+      "ms_widget": {
+        "definition": "/widgets/mining-stats.json",
+        "data": "/api/widgets/mining-stats"
+      }
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "/dashboard",
+      "accept": {
+        "text/plain": [".txt"],
+        "application/json": [".json"]
+      }
     }
   ]
 }
