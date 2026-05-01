@@ -18,25 +18,13 @@
   ],
   "screenshots": [
     {
-      "src": "/screenshots/dashboard.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "GoldMine Pro Dashboard"
+      "src": "/screenshots/dashboard.png"
     },
     {
-      "src": "/screenshots/mining.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Live Mining"
+      "src": "/screenshots/mining.png"
     },
     {
-      "src": "/screenshots/desktop.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "GoldMine Pro Desktop"
+      "src": "/screenshots/desktop.png"
     }
   ],
   "features": [
