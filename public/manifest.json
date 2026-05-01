@@ -33,7 +33,7 @@
     },
     {
       "src": "/screenshots/desktop.png",
-      "sizes": "1920x1080",
+      "sizes": "1024x1024",
       "type": "image/png",
       "form_factor": "wide",
       "label": "GoldMine Pro Desktop"
