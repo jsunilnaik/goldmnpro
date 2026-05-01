@@ -37,14 +37,14 @@
     {
       "src": "/screenshots/dashboard.png",
       "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "GoldMine Pro Dashboard"
     },
     {
       "src": "/screenshots/mining.png",
       "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "type": "image/png",
       "form_factor": "narrow",
       "label": "Live Mining"
     },
