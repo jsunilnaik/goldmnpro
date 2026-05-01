@@ -1,9 +1,9 @@
 {
-  "id": "/",
   "name": "GoldMine Pro",
   "short_name": "GoldMine",
+  "start_url": "./dashboard",
+  "id": "./dashboard",
   "description": "Digital Gold Mining Platform - Mine, Earn & Withdraw",
-  "start_url": "/dashboard",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay", "tabbed"],
   "orientation": "portrait",
