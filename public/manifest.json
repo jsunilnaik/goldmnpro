@@ -7,14 +7,14 @@
   "display": "standalone",
   "start_url": "/",
   "short_name": "GoldMine",
-  "theme_color": "#FFD700",
+  "theme_color": "#eab308",
   "description": "Digital Gold Mining Platform - Mine, Earn & Withdraw",
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "related_applications": [],
   "prefer_related_applications": false,
   "display_override": [
-    "window-controls-overlay"
+    "standalone"
   ],
   "screenshots": [
     {
