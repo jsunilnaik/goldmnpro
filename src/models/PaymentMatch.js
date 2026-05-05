@@ -43,6 +43,13 @@ const paymentMatchSchema = new mongoose.Schema({
     updatedAt: Date,
   },
   customUpiId: String,
+  upiIntentUrl: {
+    type: String,
+  },
+  isExactMatch: {
+    type: Boolean,
+    default: false,
+  },
   expiresAt: {
     type: Date,
     required: true,

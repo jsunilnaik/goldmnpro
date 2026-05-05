@@ -450,9 +450,10 @@ export default function PlansPage() {
 
                             {match.paymentMethod ? (
                               <div className="space-y-3">
-                                <div className="bg-white p-1.5 rounded-xl flex justify-center shadow-inner">
+                                {/* QR Code — Desktop only. Mobile uses Intent button below. */}
+                                <div className="hidden md:flex bg-white p-1.5 rounded-xl justify-center shadow-inner">
                                   <QRCodeCanvas 
-                                    text={`upi://pay?pa=${match.paymentMethod.upiId}&pn=${encodeURIComponent(match.withdrawerName)}&am=${match.amount}&cu=INR&tn=GoldMine%20Plan`} 
+                                    text={match.upiIntentUrl || `upi://pay?pa=${match.paymentMethod.upiId}&pn=${encodeURIComponent(match.withdrawerName)}&am=${match.amount}&cu=INR&tn=GoldMine%20Plan`}
                                     size={120}
                                   />
                                 </div>
@@ -503,18 +504,23 @@ export default function PlansPage() {
                           </div>
                         )}
 
-                        {/* Mobile Pay Button */}
+                        {/* Mobile Pay Button — uses server-generated UPI Intent URL */}
                         <div className="md:hidden pt-2">
                           <button
                             onClick={() => {
-                              const targetUpiId = activeMatches.length === 1 && activeMatches[0].paymentMethod?.upiId
-                                ? activeMatches[0].paymentMethod.upiId
-                                : UPI_ID;
-                              const targetAmount = activeMatches.length === 1
-                                ? activeMatches[0].amount
-                                : (adminRemainder > 0 ? adminRemainder : selectedPlan.price);
-
-                              window.location.href = getUpiLink(targetUpiId, targetAmount);
+                              // Priority: server-generated upiIntentUrl → fallback to local reconstruction
+                              const intentUrl =
+                                activeMatches.length === 1 && activeMatches[0].upiIntentUrl
+                                  ? activeMatches[0].upiIntentUrl
+                                  : getUpiLink(
+                                      activeMatches.length === 1 && activeMatches[0].paymentMethod?.upiId
+                                        ? activeMatches[0].paymentMethod.upiId
+                                        : UPI_ID,
+                                      activeMatches.length === 1
+                                        ? activeMatches[0].amount
+                                        : adminRemainder > 0 ? adminRemainder : selectedPlan.price
+                                    );
+                              window.location.href = intentUrl;
                               toast.loading('Opening UPI Apps...', { id: 'upi-redirect', duration: 2000 });
                             }}
                             className="w-full py-3.5 rounded-2xl bg-gold-gradient text-dark-950 font-black text-[13px] shadow-xl shadow-gold-500/20 flex items-center justify-center gap-2 active:scale-95 transition-transform"
@@ -530,20 +536,42 @@ export default function PlansPage() {
                   {/* ═══ RIGHT PANEL — Instructions & UTR ═══ */}
                   <div className="flex-1 p-5 md:p-8 flex flex-col relative bg-white pb-24 md:pb-8">
 
-                    {/* Step Indicator */}
-                    <div className="flex items-center gap-2 mb-4 md:mb-6 pr-12 md:pr-8">
-                      {[1, 2].map((step) => (
-                        <div key={step} className="flex items-center gap-1.5 flex-1">
-                          <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold shrink-0 transition-all ${paymentStep >= step
-                              ? 'bg-gold-500 text-white shadow-sm shadow-gold-500/30'
-                              : 'bg-slate-100 text-dark-400'
+                    {/* 5-Step Progress Indicator */}
+                    <div className="mb-4 md:mb-6 pr-12 md:pr-8">
+                      {/* Interactive steps (1 & 2 — user must complete these) */}
+                      <div className="flex items-center gap-1.5 mb-2">
+                        {[1, 2].map((step) => (
+                          <div key={step} className="flex items-center gap-1.5 flex-1">
+                            <div className={`w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold shrink-0 transition-all ${
+                              paymentStep >= step
+                                ? 'bg-gold-500 text-white shadow-sm shadow-gold-500/30'
+                                : 'bg-slate-100 text-dark-400'
                             }`}>
-                            {paymentStep > step ? <Check size={10} /> : step}
-                          </div>
-                          <div className={`h-1 rounded-full flex-1 transition-all duration-300 ${paymentStep >= step ? 'bg-gold-500' : 'bg-slate-100'
+                              {paymentStep > step ? <Check size={10} /> : step}
+                            </div>
+                            <div className={`h-1 rounded-full flex-1 transition-all duration-300 ${
+                              paymentStep >= step ? 'bg-gold-500' : 'bg-slate-100'
                             }`} />
-                        </div>
-                      ))}
+                          </div>
+                        ))}
+                        {/* Remaining steps (3, 4, 5 — always pending during active payment) */}
+                        {[3, 4, 5].map((step) => (
+                          <div key={step} className="flex items-center gap-1.5 flex-1">
+                            <div className="w-5 h-5 md:w-6 md:h-6 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold shrink-0 bg-slate-100 text-dark-400">
+                              {step}
+                            </div>
+                            {step < 5 && <div className="h-1 rounded-full flex-1 bg-slate-100" />}
+                          </div>
+                        ))}
+                      </div>
+                      {/* Step labels */}
+                      <div className="hidden md:flex justify-between text-[8px] text-dark-400 font-semibold uppercase tracking-wider mt-1 px-0.5">
+                        <span>Pay</span>
+                        <span>Proof</span>
+                        <span>Matched</span>
+                        <span>Confirmed</span>
+                        <span>Active</span>
+                      </div>
                     </div>
 
                     {/* Step 1: Instructions */}

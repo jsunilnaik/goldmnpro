@@ -7,6 +7,7 @@ import Withdrawal from '@/models/Withdrawal';
 import Transaction from '@/models/Transaction';
 import Subscription from '@/models/Subscription';
 import AdminConfig from '@/models/AdminConfig';
+import PaymentMatch from '@/models/PaymentMatch';
 import { canProcessWithdrawal, checkUserCooldown, checkVelocity, reserveFunds } from '@/lib/treasury';
 import { createNotification } from '@/lib/notifications';
 
@@ -124,6 +125,32 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+
+    // ── Dispute Auto-Ban Check ─────────────────────────────────────
+    // If the user has accumulated too many disputed matches as a withdrawer,
+    // lock their withdrawal access for a configurable number of days.
+    const MAX_DISPUTES = parseInt(configs.max_disputes_before_ban || '2');
+    const LOCK_DAYS = parseInt(configs.dispute_auto_lock_days || '30');
+
+    const disputeCount = await PaymentMatch.countDocuments({
+      withdrawer: currentUser._id,
+      status: 'disputed',
+    });
+
+    if (disputeCount >= MAX_DISPUTES) {
+      const lockUntil = new Date(Date.now() + LOCK_DAYS * 24 * 60 * 60 * 1000);
+      await User.findByIdAndUpdate(currentUser._id, {
+        withdrawalLockUntil: lockUntil,
+      });
+      console.warn(`[SECURITY] Auto-banned user ${currentUser._id} — ${disputeCount} disputed matches`);
+      return NextResponse.json(
+        {
+          message: `Your withdrawal access has been suspended for ${LOCK_DAYS} days due to ${disputeCount} unresolved disputed payments. Please contact support.`,
+        },
+        { status: 403 }
+      );
+    }
+    // ──────────────────────────────────────────────────────────────
 
     // Validate KYC
     const isDev = process.env.NODE_ENV === 'development';

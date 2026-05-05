@@ -114,6 +114,8 @@ adminConfigSchema.statics.seedDefaults = async function() {
     { key: 'max_withdrawal_percent_of_earnings', value: 80, category: 'withdrawal', description: 'Max % of lifetime earnings withdrawable' },
     { key: 'throttled_max_withdrawal', value: 10000, category: 'withdrawal', description: 'Max withdrawal INR when pool health is < 40%' },
     { key: 'withdrawals_enabled_globally', value: true, category: 'withdrawal', description: 'Enable/Disable withdrawals system-wide' },
+    { key: 'max_disputes_before_ban', value: 2, category: 'withdrawal', description: 'Max disputed matches before auto withdrawal lock' },
+    { key: 'dispute_auto_lock_days', value: 30, category: 'withdrawal', description: 'Days to lock withdrawal access after dispute ban' },
   ];
 
   for (const config of defaults) {

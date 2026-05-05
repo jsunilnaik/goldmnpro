@@ -4,13 +4,8 @@ import { requireAuth } from '@/lib/auth';
 import Plan from '@/models/Plan';
 import Subscription from '@/models/Subscription';
 import User from '@/models/User';
-import Transaction from '@/models/Transaction';
-import Wallet from '@/models/Wallet';
 import PaymentMatch from '@/models/PaymentMatch';
 import { sendP2PPaymentAlert } from '@/lib/sms';
-import AdminConfig from '@/models/AdminConfig';
-import { recordInflow, recordReferralOutflow } from '@/lib/treasury';
-import { activateSubscription } from '@/lib/subscriptions';
 import { createNotification } from '@/lib/notifications';
 
 export async function POST(request) {
@@ -18,35 +13,45 @@ export async function POST(request) {
         const user = await requireAuth();
         await connectDB();
 
-        const { planId, subscriptionId, utr, screenshot, matches: matchProofs } = await request.json();
+        const { planId, subscriptionId, utr, screenshot, } = await request.json();
 
-        // Validate UTR — must be exactly 12 digits
-        if (!utr || !/^\d{12}$/.test(utr.trim())) {
+        // ── Validate UTR format ─────────────────────────────────
+        // Strip all non-digit chars, then enforce exactly 12 digits.
+        const cleanUtr = (utr || '').replace(/\D/g, '').trim();
+        if (!cleanUtr || !/^\d{12}$/.test(cleanUtr)) {
             return NextResponse.json(
                 { message: 'Please enter a valid 12-digit UTR number' },
                 { status: 400 }
             );
         }
 
-        const cleanUtr = utr.trim();
+        // ── Dual Duplicate UTR Check ────────────────────────────
+        // Check BOTH Subscription.utr AND PaymentMatch.proof.utr to prevent
+        // a single UTR being re-used across two different payment flows.
+        const [existingSubUtr, existingMatchUtr] = await Promise.all([
+            Subscription.findOne({ utr: cleanUtr }),
+            PaymentMatch.findOne({ 'proof.utr': cleanUtr }),
+        ]);
 
-        // Check for duplicate UTR
-        const existingUtr = await Subscription.findOne({ utr: cleanUtr });
-        if (existingUtr) {
+        if (existingSubUtr || existingMatchUtr) {
             return NextResponse.json(
-                { message: 'This UTR has already been used.' },
+                { message: 'This UTR has already been used. Please submit a fresh payment.' },
                 { status: 400 }
             );
         }
 
+        // ── Resolve Subscription ────────────────────────────────
         let subscription;
         if (subscriptionId) {
             subscription = await Subscription.findById(subscriptionId);
         }
 
         if (!subscription) {
-            // Fallback: create one if it doesn't exist (Legacy compatibility)
+            // Fallback: create one if it doesn't exist (legacy compatibility)
             const plan = await Plan.findById(planId);
+            if (!plan) {
+                return NextResponse.json({ message: 'Plan not found' }, { status: 404 });
+            }
             subscription = await Subscription.create({
                 user: user._id,
                 plan: planId,
@@ -55,29 +60,34 @@ export async function POST(request) {
             });
         }
 
-        // Update matches status
-        const PaymentMatch = (await import('@/models/PaymentMatch')).default;
+        // ── P2P Flow: Update matched PaymentMatch records ───────
         const matches = await PaymentMatch.find({ subscription: subscription._id });
 
         if (matches.length > 0) {
-            // P2P Flow
             for (const match of matches) {
                 match.status = 'paid';
-                match.proof = { 
-                    utr: cleanUtr, 
+                match.proof = {
+                    utr: cleanUtr,
                     screenshot: screenshot || null,
-                    updatedAt: new Date() 
+                    updatedAt: new Date(),
                 };
                 await match.save();
 
-                // Notify Withdrawer
+                // Notify Withdrawer via SMS — include amount and match reference
                 try {
                     const withdrawer = await User.findById(match.withdrawer);
                     if (withdrawer?.phone) {
                         await sendP2PPaymentAlert(withdrawer.phone, match.amount);
                     }
+                    // In-app notification to withdrawer
+                    await createNotification(match.withdrawer, {
+                        title: 'Payment Received — Please Confirm ✅',
+                        message: `A user has paid ₹${match.amount} to your UPI. Check your bank app and confirm receipt.`,
+                        type: 'withdrawal',
+                        actionUrl: '/withdraw',
+                    });
                 } catch (err) {
-                    console.error('P2P SMS Alert error:', err);
+                    console.error('P2P notify withdrawer error:', err);
                 }
             }
 
@@ -87,18 +97,15 @@ export async function POST(request) {
             await subscription.save();
 
             return NextResponse.json({
-                message: 'Payment proof submitted! Please wait for the recipients to confirm the funds in their bank.',
+                message: 'Payment proof submitted! Please wait for the recipient to confirm receipt in their bank app.',
                 status: 'pending_verification',
                 subscription,
             });
         }
 
-        // Legacy/Direct Flow (Admin)
+        // ── Legacy / Direct Flow (no P2P match — admin reviews) ─
         subscription.utr = cleanUtr;
         subscription.screenshot = screenshot || null;
-        await subscription.save();
-        
-        // Always set to pending_verification - manual admin approval required as per requirements
         subscription.status = 'pending_verification';
         await subscription.save();
 
@@ -111,10 +118,10 @@ export async function POST(request) {
     } catch (error) {
         console.error('❌ UTR Submission Error:', error);
 
-        // Handle duplicate key error for UTR
+        // Mongoose duplicate key (UTR unique index violation)
         if (error.code === 11000) {
             return NextResponse.json(
-                { message: 'This UTR has already been used.' },
+                { message: 'This UTR has already been used. Please submit a fresh payment.' },
                 { status: 400 }
             );
         }

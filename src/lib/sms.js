@@ -107,4 +107,9 @@ export async function sendP2PActivationAlert(phone, planName) {
   return sendSMS(phone, message);
 }
 
-export default { sendSMS, sendOTP, sendWelcomeSMS, sendWithdrawalSMS, sendP2PMatchAlert, sendP2PPaymentAlert, sendP2PActivationAlert };
+export async function sendP2PNudgeAlert(phone, amount, matchRef) {
+  const message = `GoldMine Pro: REMINDER - A payment of Rs.${amount} was sent to your UPI (Match: ...${matchRef}). Check your bank app and confirm receipt at goldminepro.com/withdraw to avoid a dispute.`;
+  return sendSMS(phone, message);
+}
+
+export default { sendSMS, sendOTP, sendWelcomeSMS, sendWithdrawalSMS, sendP2PMatchAlert, sendP2PPaymentAlert, sendP2PActivationAlert, sendP2PNudgeAlert };

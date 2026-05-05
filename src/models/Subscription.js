@@ -19,6 +19,10 @@ const subscriptionSchema = new mongoose.Schema({
   // Payment Details
   utr: {
     type: String,
+    unique: true,
+    sparse: true,
+    match: [/^\d{12}$/, 'UTR must be exactly 12 digits'],
+    set: (v) => (v ? v.trim().replace(/\D/g, '') : v), // Normalize on save
   },
   screenshot: String,
   paymentId: String,
