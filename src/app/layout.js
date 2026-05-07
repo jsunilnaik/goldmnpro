@@ -21,7 +21,7 @@ const mono = JetBrains_Mono({
 });
 
 export const viewport = {
-  themeColor: '#FFD700',
+  themeColor: '#E6B800',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -30,16 +30,16 @@ export const viewport = {
 };
 
 export const metadata = {
-  title: 'GoldMine Pro - Digital Gold Mining Platform',
-  description: 'Mine digital gold, earn rewards, and withdraw monthly. Start your mining journey today!',
-  keywords: 'gold mining, digital gold, mining platform, earn gold, crypto mining',
+  title: 'GoldMine Pro - Premium Digital Mining',
+  description: 'The world\'s most advanced digital gold mining platform. Mine, earn, and withdraw rewards with industry-leading security.',
+  keywords: 'gold mining, digital gold, mining platform, earn gold, crypto mining, PWA mining',
   authors: [{ name: 'GoldMine Pro' }],
   creator: 'GoldMine Pro',
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
   icons: {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192-maskable.png', type: 'image/png', sizes: '192x192' },
     ],
     apple: [
       { url: '/apple-icon.png' },
@@ -58,7 +58,7 @@ export const metadata = {
     type: 'website',
     siteName: 'GoldMine Pro',
     title: 'GoldMine Pro - Digital Gold Mining Platform',
-    description: 'Mine digital gold, earn rewards, and withdraw monthly.',
+    description: 'Premium digital gold mining platform. Start your mining journey today!',
     images: ['/og-image.png'],
   },
 };
@@ -70,7 +70,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-startup-image" href="/splash/splash.png" />
