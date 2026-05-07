@@ -40,9 +40,11 @@ export const metadata = {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/icons/icon-192-maskable.png', type: 'image/png', sizes: '192x192' },
+      { url: '/icons/icon-512-maskable.png', type: 'image/png', sizes: '512x512' },
     ],
     apple: [
       { url: '/apple-icon.png' },
+      { url: '/icons/icon-192-maskable.png', sizes: '192x192', type: 'image/png' },
     ],
   },
   manifest: '/manifest.json',
@@ -70,10 +72,9 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <link rel="apple-touch-icon" href="/icons/icon-192-maskable.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="apple-touch-startup-image" href="/splash/splash.png" />
       </head>
       <body className={`bg-slate-50 text-dark-50 font-sans antialiased overflow-x-hidden ${isImpersonating ? 'impersonating' : ''}`} suppressHydrationWarning>
         <AuthProvider>
