@@ -279,6 +279,25 @@ export async function checkUserCooldown(userId, Subscription, Withdrawal, User) 
       };
     }
   }
+
+  // 0.5 Instant Withdrawal Override (Bypasses all cooldowns)
+  console.log('[TREASURY] All Config Keys:', Object.keys(configs));
+  console.log(`[TREASURY] Checking instant withdrawal for user ${userId}. Global key: instant_withdrawal_active, Value: ${configs.instant_withdrawal_active}, Type: ${typeof configs.instant_withdrawal_active}`);
+  const isInstantActiveGlobal = String(configs.instant_withdrawal_active).toLowerCase() === 'true' || configs.instant_withdrawal_active === true;
+  console.log(`[TREASURY] isInstantActiveGlobal evaluated to: ${isInstantActiveGlobal}`);
+  
+  let userInstantEnabled = false;
+  if (User) {
+    const user = await User.findById(userId).select('withdrawalSettings').lean();
+    userInstantEnabled = user?.withdrawalSettings?.instantEnabled || false;
+    console.log(`[TREASURY] User instant enabled: ${userInstantEnabled}`);
+  }
+
+  if (isInstantActiveGlobal || userInstantEnabled) {
+    console.log(`[TREASURY] ✅ Instant withdrawal allowed for user ${userId}`);
+    return { allowed: true, reason: '', code: 'OK' };
+  }
+
   const newSubCooldownDays = parseInt(configs.new_subscriber_cooldown_days || '15');
   const latestSub = await Subscription.findOne({
     user: userId,
@@ -295,6 +314,8 @@ export async function checkUserCooldown(userId, Subscription, Withdrawal, User) 
       };
     }
   }
+  
+
 
   // 2. Post-withdrawal cooldown
   const postWithdrawCooldownDays = parseInt(configs.withdrawal_cooldown_days || '7');

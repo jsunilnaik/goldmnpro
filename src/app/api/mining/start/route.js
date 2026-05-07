@@ -151,10 +151,6 @@ export async function POST(request) {
       session,
     });
   } catch (error) {
-    console.error('Start mining error:', error);
-    return NextResponse.json(
-      { message: error.message || 'Failed to start mining' },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Start mining error');
   }
 }

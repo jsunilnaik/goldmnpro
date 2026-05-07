@@ -37,20 +37,35 @@ export default function DashboardPage() {
 
     try {
       const [statsRes, txRes] = await Promise.all([
-        fetch('/api/mining/status'),
-        fetch('/api/wallet/history?limit=5'),
+        fetch('/api/mining/status').catch(e => ({ ok: false, error: e })),
+        fetch('/api/wallet/history?limit=5').catch(e => ({ ok: false, error: e })),
       ]);
-      const statsData = await statsRes.json();
-      const txData = await txRes.json();
-      setStats(statsData);
-      setRecentTx(txData.transactions || []);
-    } catch (error) {
-      // Silently handle network errors
-      if (error.name === 'TypeError' && (error.message === 'Failed to fetch' || error.message?.includes('network'))) return;
 
-      if (typeof navigator !== 'undefined' && navigator.onLine) {
-        console.error('Dashboard data error:', error);
+      let statsData = null;
+      if (statsRes.ok) {
+        try {
+          statsData = await statsRes.json();
+        } catch (e) {
+          console.error('Failed to parse stats JSON:', e);
+        }
+      } else if (statsRes.status !== 401) { // Don't log 401s as they are expected when session expires
+        console.warn(`Stats API returned ${statsRes.status}`);
       }
+
+      let txData = { transactions: [] };
+      if (txRes.ok) {
+        try {
+          txData = await txRes.json();
+        } catch (e) {
+          console.error('Failed to parse transactions JSON:', e);
+        }
+      }
+
+      setStats(statsData);
+      setRecentTx(txData?.transactions || []);
+    } catch (error) {
+      // Handle network or parsing errors gracefully
+      console.error('Dashboard data fetching failed:', error);
     } finally {
       setLoading(false);
     }

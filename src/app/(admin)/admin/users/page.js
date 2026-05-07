@@ -823,15 +823,171 @@ export default function AdminUsersPage() {
                           {selectedUser.isActive ? 'Suspend Network Access' : 'Restore Functional Access'}
                         </button>
 
-                        <div className="bg-slate-50 p-4 rounded-2xl border border-dark-900/5 space-y-3">
-                          <p className="text-[10px] font-black uppercase text-dark-400 tracking-widest">Withdrawal Lock</p>
-                          <div className="flex gap-2">
-                            <input type="date" value={lockDate} onChange={e => setLockDate(e.target.value)} className="flex-1 bg-white border rounded-xl px-3 py-2 text-xs font-bold" />
-                            <button onClick={() => handleAdminAction('set_withdrawal_lock', { lockUntil: lockDate })} className="bg-dark-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">Lock</button>
+                        <div className="bg-slate-50 p-4 md:p-6 rounded-2xl border border-dark-900/5 space-y-6">
+                          <div className="flex items-center justify-between">
+                            <p className="text-[10px] font-black uppercase text-dark-400 tracking-widest flex items-center gap-2"><Lock size={14} /> Withdrawal Control</p>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedUser.withdrawalSettings?.customEnabled} 
+                                onChange={(e) => handleAdminAction('set_custom_withdrawal', { 
+                                  withdrawalSettings: { 
+                                    ...selectedUser.withdrawalSettings, 
+                                    customEnabled: e.target.checked,
+                                    windows: selectedUser.withdrawalSettings?.windows || []
+                                  } 
+                                })}
+                                className="w-4 h-4 rounded border-dark-900/10 text-red-600 focus:ring-red-500/20"
+                              />
+                              <span className="text-[9px] font-black uppercase text-dark-500 group-hover:text-red-600 transition-colors">Custom Windows</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer group">
+                              <input 
+                                type="checkbox" 
+                                checked={selectedUser.withdrawalSettings?.instantEnabled} 
+                                onChange={(e) => handleAdminAction('set_custom_withdrawal', { 
+                                  withdrawalSettings: { 
+                                    ...selectedUser.withdrawalSettings, 
+                                    instantEnabled: e.target.checked
+                                  } 
+                                })}
+                                className="w-4 h-4 rounded border-dark-900/10 text-green-600 focus:ring-green-500/20"
+                              />
+                              <span className="text-[9px] font-black uppercase text-dark-500 group-hover:text-green-600 transition-colors">Instant Mode</span>
+                            </label>
                           </div>
-                          {selectedUser.withdrawalLockUntil && (
-                            <button onClick={() => handleAdminAction('set_withdrawal_lock', { lockUntil: null })} className="text-[10px] text-red-600 font-bold hover:underline">Clear current lock</button>
-                          )}
+
+                          {/* Legacy Lock */}
+                          <div className="space-y-2">
+                            <p className="text-[8px] font-bold text-dark-400 uppercase tracking-tighter pl-1">Global Restrict Until</p>
+                            <div className="flex gap-2">
+                              <input type="date" value={lockDate} onChange={e => setLockDate(e.target.value)} className="flex-1 bg-white border border-dark-900/10 rounded-xl px-3 py-2 text-xs font-bold shadow-sm" />
+                              <button onClick={() => handleAdminAction('set_withdrawal_lock', { lockUntil: lockDate })} className="bg-dark-50 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md">Lock</button>
+                            </div>
+                            {selectedUser.withdrawalLockUntil && (
+                              <button onClick={() => handleAdminAction('set_withdrawal_lock', { lockUntil: null })} className="text-[9px] text-red-600 font-bold hover:underline">Clear current lock</button>
+                            )}
+                          </div>
+
+                          {/* Custom Windows UI */}
+                          <AnimatePresence>
+                            {selectedUser.withdrawalSettings?.customEnabled && (
+                              <motion.div 
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="space-y-4 pt-2 border-t border-dark-900/5"
+                              >
+                                <div className="flex items-center justify-between">
+                                  <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest">Active Overrides</p>
+                                  <button 
+                                    onClick={() => {
+                                      const newWindows = [...(selectedUser.withdrawalSettings?.windows || [])];
+                                      newWindows.push({
+                                        startTime: new Date().toISOString(),
+                                        endTime: new Date(Date.now() + 86400000).toISOString(),
+                                        minAmount: 1000,
+                                        maxAmount: 50000,
+                                        allowedAmounts: [1000, 2000, 5000, 10000],
+                                        description: 'Special User Window'
+                                      });
+                                      handleAdminAction('set_custom_withdrawal', { 
+                                        withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                      });
+                                    }}
+                                    className="p-1.5 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-all"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                </div>
+
+                                <div className="max-h-[300px] overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                                  {selectedUser.withdrawalSettings?.windows?.length === 0 ? (
+                                    <p className="text-[9px] text-dark-400 text-center py-4 italic">No windows defined. This user is effectively blocked from withdrawals.</p>
+                                  ) : (
+                                    selectedUser.withdrawalSettings.windows.map((window, wIdx) => (
+                                      <div key={wIdx} className="bg-white border border-dark-900/5 rounded-xl p-3 space-y-3 relative group/win shadow-sm">
+                                        <button 
+                                          onClick={() => {
+                                            const newWindows = selectedUser.withdrawalSettings.windows.filter((_, i) => i !== wIdx);
+                                            handleAdminAction('set_custom_withdrawal', { 
+                                              withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                            });
+                                          }}
+                                          className="absolute top-2 right-2 p-1 text-dark-300 hover:text-red-500 opacity-0 group-hover/win:opacity-100 transition-all"
+                                        >
+                                          <Trash2 size={12} />
+                                        </button>
+                                        
+                                        <input 
+                                          type="text"
+                                          placeholder="Window description..."
+                                          value={window.description}
+                                          onChange={(e) => {
+                                            const newWindows = [...selectedUser.withdrawalSettings.windows];
+                                            newWindows[wIdx].description = e.target.value;
+                                            handleAdminAction('set_custom_withdrawal', { 
+                                              withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                            });
+                                          }}
+                                          className="w-full bg-slate-50 border-none text-[10px] font-bold p-1 rounded focus:ring-0"
+                                        />
+
+                                        <div className="grid grid-cols-2 gap-2">
+                                          <div className="space-y-1">
+                                            <p className="text-[8px] font-black text-dark-400 uppercase">Start</p>
+                                            <input 
+                                              type="datetime-local" 
+                                              value={new Date(window.startTime).toISOString().slice(0, 16)}
+                                              onChange={(e) => {
+                                                const newWindows = [...selectedUser.withdrawalSettings.windows];
+                                                newWindows[wIdx].startTime = new Date(e.target.value);
+                                                handleAdminAction('set_custom_withdrawal', { 
+                                                  withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                                });
+                                              }}
+                                              className="w-full bg-slate-50 border-none text-[9px] font-bold p-1 rounded"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <p className="text-[8px] font-black text-dark-400 uppercase">End</p>
+                                            <input 
+                                              type="datetime-local" 
+                                              value={new Date(window.endTime).toISOString().slice(0, 16)}
+                                              onChange={(e) => {
+                                                const newWindows = [...selectedUser.withdrawalSettings.windows];
+                                                newWindows[wIdx].endTime = new Date(e.target.value);
+                                                handleAdminAction('set_custom_withdrawal', { 
+                                                  withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                                });
+                                              }}
+                                              className="w-full bg-slate-50 border-none text-[9px] font-bold p-1 rounded"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                          <p className="text-[8px] font-black text-dark-400 uppercase">Allowed Amounts (comma sep.)</p>
+                                          <input 
+                                            type="text" 
+                                            value={window.allowedAmounts?.join(', ')}
+                                            onChange={(e) => {
+                                              const newWindows = [...selectedUser.withdrawalSettings.windows];
+                                              newWindows[wIdx].allowedAmounts = e.target.value.split(',').map(v => parseInt(v.trim())).filter(v => !isNaN(v));
+                                              handleAdminAction('set_custom_withdrawal', { 
+                                                withdrawalSettings: { ...selectedUser.withdrawalSettings, windows: newWindows } 
+                                              });
+                                            }}
+                                            className="w-full bg-slate-50 border-none text-[9px] font-mono font-bold p-1 rounded"
+                                          />
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
 
                         <button onClick={() => handleDeleteUser(selectedUser._id)} className="w-full py-3 text-red-600 text-[10px] font-black uppercase tracking-widest border border-red-100 rounded-xl hover:bg-red-50 transition-all flex items-center justify-center gap-2">

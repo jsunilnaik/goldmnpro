@@ -15,15 +15,15 @@ async function connectDB() {
   }
 
   // DNS FIX for Atlas SRV records (Node.js environments only)
-  // We await this to ensure DNS is configured before mongoose tries to connect
-  if (typeof process !== "undefined" && process.versions?.node) {
+  if (typeof process !== "undefined" && process.versions?.node && process.env.USE_GOOGLE_DNS === 'true') {
     try {
       const dns = await import("dns");
       if (dns && typeof dns.setServers === "function") {
+        console.log("[MongoDB] Forcing Google DNS (8.8.8.8)...");
         dns.setServers(["8.8.8.8", "8.8.4.4"]);
       }
     } catch (e) {
-      // Ignore errors in non-node environments
+      console.warn("[MongoDB] Failed to set Google DNS, falling back to system DNS.");
     }
   }
 
@@ -44,7 +44,7 @@ async function connectDB() {
     const opts = {
       bufferCommands: false,
       // Add timeouts so frozen edge workers don't hang forever
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
       // Serverless optimizations to prevent connection exhaustion
       maxPoolSize: 1,

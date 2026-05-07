@@ -26,29 +26,29 @@ export default function WithdrawPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const withdrawalDateConfig = process.env.NEXT_PUBLIC_WITHDRAWAL_DATE || '15';
-  const MIN_WITHDRAWAL = parseInt(process.env.NEXT_PUBLIC_MIN_WITHDRAWAL || '500');
+  const [config, setConfig] = useState(null);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
-  const today = new Date();
-  const dayOfMonth = today.getDate();
-  let isWithdrawalWindow = false;
 
-  if (withdrawalDateConfig === 'daily') {
-    isWithdrawalWindow = true;
-  } else {
-    const allowedDays = withdrawalDateConfig.toString().split(',').map(d => parseInt(d.trim()));
-    const windowDays = 2; // Fixed 3-day window including start day
-    for (const startDay of allowedDays) {
-      if (dayOfMonth >= startDay && dayOfMonth <= (startDay + windowDays)) {
-        isWithdrawalWindow = true;
-        break;
-      }
-    }
-  }
+  const isWithdrawalWindow = config?.isWithdrawalOpen || false;
+
 
   useEffect(() => {
+    fetchConfig();
     fetchWithdrawals();
   }, []);
+
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/withdrawals/config');
+      const data = await res.json();
+      setConfig(data);
+    } catch (error) {
+      console.error('Error fetching config:', error);
+    } finally {
+      setLoadingConfig(false);
+    }
+  };
 
   const fetchWithdrawals = async () => {
     try {
@@ -63,8 +63,9 @@ export default function WithdrawPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!amount || parseFloat(amount) < MIN_WITHDRAWAL) {
-      toast.error(`Minimum withdrawal is ₹${MIN_WITHDRAWAL}`);
+    const minAmt = config?.minWithdrawal || 500;
+    if (!amount || parseFloat(amount) < minAmt) {
+      toast.error(`Minimum withdrawal is ₹${minAmt}`);
       return;
     }
 
@@ -79,7 +80,7 @@ export default function WithdrawPage() {
     }
 
     if (!isWithdrawalWindow) {
-      toast.error(`Withdrawals are only available on the ${withdrawalDateConfig}th of each month`);
+      toast.error(`Withdrawals are currently closed.`);
       return;
     }
 
@@ -109,6 +110,7 @@ export default function WithdrawPage() {
       toast.error('Network error');
     } finally {
       setSubmitting(false);
+      fetchConfig(); // Refresh window status
     }
   };
 
@@ -142,7 +144,6 @@ export default function WithdrawPage() {
       </div>
 
       {/* Withdrawal Window Notice */}
-      {/* Withdrawal Window Notice */}
       <div className={`glass-card p-4 flex items-start gap-3 shadow-sm ${
         isWithdrawalWindow
           ? 'border-green-500/20 bg-green-500/5'
@@ -153,17 +154,21 @@ export default function WithdrawPage() {
         ) : (
           <Calendar size={18} className="text-amber-600 shrink-0 mt-0.5" />
         )}
-        <div>
+        <div className="flex-1">
           <p className={`text-sm font-bold ${isWithdrawalWindow ? 'text-green-700' : 'text-amber-700'}`}>
             {isWithdrawalWindow
-              ? 'Withdrawal window is open!'
-              : `Next withdrawal: ${withdrawalDateConfig}${withdrawalDateConfig === 'daily' ? '' : 'th of this month'}`
+              ? (config?.isInstant ? 'Instant Mode Active ⚡' : 'Withdrawal window is open!')
+              : 'Withdrawals are currently closed'
             }
           </p>
           <p className="text-xs text-dark-500 mt-1 font-medium leading-relaxed">
-            {withdrawalDateConfig === 'daily' 
-              ? 'Withdrawals are currently enabled daily for all users.'
-              : `Withdrawals are processed on the ${withdrawalDateConfig}th of every month. Requests must be submitted within the 3-day window.`
+            {isWithdrawalWindow 
+              ? (config?.isInstant 
+                  ? 'Your account has instant withdrawal access enabled.' 
+                  : `An active withdrawal window is open until ${new Date(config?.activeWindow?.endTime).toLocaleString('en-IN')}.`)
+              : (config?.windows?.length > 0 
+                  ? `Next scheduled window: ${new Date(config?.windows[0]?.startTime).toLocaleString('en-IN')}`
+                  : 'No upcoming withdrawal windows scheduled. Please contact support.')
             }
           </p>
         </div>
@@ -283,15 +288,20 @@ export default function WithdrawPage() {
         )}
       </motion.button>
 
-      {/* TDS Notice */}
+      {/* TDS & Fee Notice */}
       <div className="glass-card p-4 flex items-start gap-3 border-dark-800 shadow-sm bg-blue-50/30">
         <div className="w-6 h-6 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
           <Info size={14} className="text-blue-600" />
         </div>
-        <p className="text-[11px] text-dark-500 leading-relaxed font-medium">
-          TDS of 30% will be deducted as per Income Tax regulations. Processing fee of ₹10
-          may apply for bank transfers.
-        </p>
+        <div className="flex-1">
+          <p className="text-[11px] text-dark-500 leading-relaxed font-medium">
+            TDS of {config?.tdsPercentage || 30}% will be deducted as per Income Tax regulations. 
+          </p>
+          <p className="text-[11px] text-dark-500 leading-relaxed font-bold mt-1">
+            Total Processing Fee: ₹{(config?.standardFee || 0) + (config?.isInstant ? (config?.instantFee || 0) : 0)}
+            {config?.isInstant && config?.instantFee > 0 && <span className="text-green-600 ml-1">(Includes ₹{config?.instantFee} Instant Surcharge)</span>}
+          </p>
+        </div>
       </div>
 
       {/* Incoming P2P Payments for Confirmation */}

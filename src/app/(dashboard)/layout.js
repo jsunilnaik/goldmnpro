@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
@@ -11,8 +12,15 @@ import BroadcastModal from '@/components/common/BroadcastModal';
 import { MiningProvider } from '@/context/MiningContext';
 
 export default function DashboardLayout({ children }) {
-  const { loading, user, isBlocked } = useAuth();
+  const { loading, user, isBlocked, isAuthenticated } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [loading, isAuthenticated, router]);
 
   if (loading) {
     return <SplashScreen />;

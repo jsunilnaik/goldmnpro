@@ -540,7 +540,7 @@ export default function HomePage() {
                          <Star key={index} size={10} className="fill-gold-500 text-gold-500" />
                        ))}
                     </div>
-                    <h4 className="text-xs font-black text-dark-50 leading-snug line-clamp-1 uppercase tracking-tight">{review.title}</h4>
+                    <h4 className="text-[9px] min-[375px]:text-xs font-black text-dark-50 leading-snug line-clamp-1 uppercase tracking-tight">{review.title}</h4>
                     <p className="text-[10px] text-dark-300 font-medium leading-relaxed mt-1 line-clamp-2 italic">
                       "{review.description}"
                     </p>

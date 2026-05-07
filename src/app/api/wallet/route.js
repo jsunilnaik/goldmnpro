@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { requireAuth } from '@/lib/auth';
 import Wallet from '@/models/Wallet';
+import { handleApiError } from '@/lib/api-error';
 
 export async function GET(request) {
   try {

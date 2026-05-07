@@ -410,6 +410,20 @@ export async function PUT(request) {
         }
         break;
       }
+      
+      case 'set_custom_withdrawal': {
+        const { withdrawalSettings } = body;
+        resultUser = await User.findByIdAndUpdate(userId, { 
+          withdrawalSettings 
+        }, { new: true });
+        
+        await createNotification(userId, {
+          title: 'Withdrawal Settings Updated',
+          message: 'Your withdrawal windows and limits have been updated by the administrator.',
+          type: 'system'
+        });
+        break;
+      }
 
       default:
         return NextResponse.json({ message: 'Invalid action' }, { status: 400 });

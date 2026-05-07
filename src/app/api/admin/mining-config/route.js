@@ -65,7 +65,14 @@ export async function POST(request) {
           withdrawalWindowDays: 'withdrawal_window_days',
           tdsPer: 'tds_percentage',
           processingFee: 'processing_fee',
-          referralBonusDefault: 'referral_bonus_default'
+          referralBonusDefault: 'referral_bonus_default',
+          withdrawalWindows: 'withdrawal_windows',
+          instantWithdrawalActive: 'instant_withdrawal_active',
+          instantWithdrawalFee: 'instant_withdrawal_fee',
+          withdrawalCooldownDays: 'withdrawal_cooldown_days',
+          newSubscriberCooldownDays: 'new_subscriber_cooldown_days',
+          bonusMultiplierActive: 'bonus_multiplier_active',
+          bonusMultiplierValue: 'bonus_multiplier_value'
         };
 
         const updatePromises = Object.entries(configs).map(async ([feKey, value]) => {

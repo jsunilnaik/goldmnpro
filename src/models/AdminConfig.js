@@ -116,6 +116,8 @@ adminConfigSchema.statics.seedDefaults = async function() {
     { key: 'withdrawals_enabled_globally', value: true, category: 'withdrawal', description: 'Enable/Disable withdrawals system-wide' },
     { key: 'max_disputes_before_ban', value: 2, category: 'withdrawal', description: 'Max disputed matches before auto withdrawal lock' },
     { key: 'dispute_auto_lock_days', value: 30, category: 'withdrawal', description: 'Days to lock withdrawal access after dispute ban' },
+    { key: 'instant_withdrawal_active', value: false, category: 'withdrawal', description: 'Enable global instant withdrawals' },
+    { key: 'instant_withdrawal_fee', value: 0, category: 'withdrawal', description: 'Instant withdrawal surcharge fee' },
   ];
 
   for (const config of defaults) {

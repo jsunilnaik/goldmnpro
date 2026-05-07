@@ -37,56 +37,108 @@ export async function POST(request) {
       );
     }
 
-    // Prioritize 'daily' from env if set, otherwise use database with env fallback
-    const withdrawalDateConfig = process.env.WITHDRAWAL_DATE === 'daily' 
-      ? 'daily' 
-      : (configs.withdrawal_date || process.env.WITHDRAWAL_DATE || '15');
-      
-    const WINDOW_DAYS = parseInt(configs.withdrawal_window_days || process.env.WITHDRAWAL_WINDOW_DAYS || '3');
-    const MIN_WITHDRAWAL = parseInt(configs.min_withdrawal_amount || process.env.MIN_WITHDRAWAL_AMOUNT || '500');
-    const MAX_WITHDRAWAL = parseInt(configs.max_withdrawal_amount || '500000');
+    // --- WITHDRAWAL WINDOW & AMOUNT VALIDATION ---
+    let activeWindow = null;
+    let windows = [];
 
-    // Validate withdrawal window
-    const today = new Date();
-    const dayOfMonth = today.getDate();
-    let isWindowOpen = false;
-    let windowMessage = '';
-
-    if (withdrawalDateConfig === 'daily') {
-      isWindowOpen = true;
+    // Prioritize user-specific custom settings
+    if (user.withdrawalSettings?.customEnabled && user.withdrawalSettings.windows?.length > 0) {
+      windows = user.withdrawalSettings.windows;
     } else {
-      const allowedDays = withdrawalDateConfig.toString().split(',').map(d => parseInt(d.trim()));
-      
-      for (const startDay of allowedDays) {
-        if (dayOfMonth >= startDay && dayOfMonth <= (startDay + WINDOW_DAYS)) {
-          isWindowOpen = true;
-          break;
+      windows = configs.withdrawal_windows || [];
+    }
+
+    const now = new Date();
+    
+    if (windows.length > 0) {
+      // Find currently active window
+      activeWindow = windows.find(w => {
+        const start = new Date(w.startTime);
+        const end = new Date(w.endTime);
+        return now >= start && now <= end;
+      });
+
+      if (!activeWindow) {
+        // Find next window for better error message
+        const nextWindow = windows
+          .filter(w => new Date(w.startTime) > now)
+          .sort((a, b) => new Date(a.startTime) - new Date(b.startTime))[0];
+
+        let msg = 'The withdrawal window is currently closed.';
+        if (nextWindow) {
+          msg += ` The next window opens on ${new Date(nextWindow.startTime).toLocaleString()}.`;
+        }
+        
+        return NextResponse.json({ message: msg }, { status: 400 });
+      }
+
+      // Validate amount against active window constraints
+      const min = activeWindow.minAmount || parseInt(configs.min_withdrawal_amount || '500');
+      const max = activeWindow.maxAmount || parseInt(configs.max_withdrawal_amount || '500000');
+      const allowed = activeWindow.allowedAmounts && activeWindow.allowedAmounts.length > 0 
+        ? activeWindow.allowedAmounts 
+        : null;
+
+      if (amount < min || amount > max) {
+        return NextResponse.json(
+          { message: `Withdrawal amount must be between ₹${min.toLocaleString()} and ₹${max.toLocaleString()}.` },
+          { status: 400 }
+        );
+      }
+
+      if (allowed && !allowed.includes(amount)) {
+        return NextResponse.json(
+          { message: `Invalid amount. Allowed amounts for this window are: ₹${allowed.join(', ₹')}` },
+          { status: 400 }
+        );
+      }
+    } else {
+      // --- LEGACY FALLBACK LOGIC ---
+      const withdrawalDateConfig = process.env.WITHDRAWAL_DATE === 'daily' 
+        ? 'daily' 
+        : (configs.withdrawal_date || process.env.WITHDRAWAL_DATE || '15');
+        
+      const WINDOW_DAYS = parseInt(configs.withdrawal_window_days || process.env.WITHDRAWAL_WINDOW_DAYS || '3');
+      const today = new Date();
+      const dayOfMonth = today.getDate();
+      let isWindowOpen = false;
+      let windowMessage = '';
+
+      if (withdrawalDateConfig === 'daily') {
+        isWindowOpen = true;
+      } else {
+        const allowedDays = withdrawalDateConfig.toString().split(',').map(d => parseInt(d.trim()));
+        for (const startDay of allowedDays) {
+          if (dayOfMonth >= startDay && dayOfMonth <= (startDay + WINDOW_DAYS)) {
+            isWindowOpen = true;
+            break;
+          }
+        }
+        if (!isWindowOpen) {
+          const dateDesc = allowedDays.length > 1 
+            ? `the ${allowedDays.join('th, ')}th` 
+            : `the ${allowedDays[0]}th`;
+          windowMessage = `Withdrawals are only available from ${dateDesc} to ${allowedDays.map(d => d + WINDOW_DAYS).join('th, ')}th of each month.`;
         }
       }
 
       if (!isWindowOpen) {
-        const dateDesc = allowedDays.length > 1 
-          ? `the ${allowedDays.join('th, ')}th` 
-          : `the ${allowedDays[0]}th`;
-        windowMessage = `Withdrawals are only available from ${dateDesc} to ${allowedDays.map(d => d + WINDOW_DAYS).join('th, ')}th of each month.`;
+        return NextResponse.json(
+          { message: windowMessage || 'Withdrawal window is closed.' },
+          { status: 400 }
+        );
+      }
+
+      // Legacy hardcoded amounts if no windows defined
+      const ALLOWED_AMOUNTS = [1000, 2000, 3000, 4999, 9999, 19999];
+      if (!amount || !ALLOWED_AMOUNTS.includes(amount)) {
+        return NextResponse.json(
+          { message: `Invalid withdrawal amount. Allowed amounts are: ₹${ALLOWED_AMOUNTS.join(', ₹')}` },
+          { status: 400 }
+        );
       }
     }
-
-    if (!isWindowOpen) {
-      return NextResponse.json(
-        { message: windowMessage || 'Withdrawal window is closed.' },
-        { status: 400 }
-      );
-    }
-
-    // Validate amount
-    const ALLOWED_AMOUNTS = [1000, 2000, 3000, 4999, 9999, 19999];
-    if (!amount || !ALLOWED_AMOUNTS.includes(amount)) {
-      return NextResponse.json(
-        { message: `Invalid withdrawal amount. Allowed amounts are: ₹${ALLOWED_AMOUNTS.join(', ₹')}` },
-        { status: 400 }
-      );
-    }
+    // --- END WITHDRAWAL WINDOW VALIDATION ---
 
     // --- TREASURY PRE-FLIGHT CHECKS ---
     // 1. Check pool health & daily caps
@@ -174,11 +226,24 @@ export async function POST(request) {
 
     const TDS_PERCENTAGE = parseInt(configs.tds_percentage || '30');
     const PROCESSING_FEE = parseInt(configs.processing_fee || '10');
+    
+    // Check for Instant Withdrawal status
+    const isInstantActiveGlobal = configs.instant_withdrawal_active === 'true' || configs.instant_withdrawal_active === true;
+    const userInstantEnabled = user?.withdrawalSettings?.instantEnabled || false;
+    const isInstant = isInstantActiveGlobal || userInstantEnabled;
+    const INSTANT_FEE = isInstant ? parseInt(configs.instant_withdrawal_fee || '0') : 0;
 
     // Calculate amounts
     const tdsAmount = Math.round((amount * TDS_PERCENTAGE) / 100);
-    const feeAmount = PROCESSING_FEE;
+    const feeAmount = PROCESSING_FEE + INSTANT_FEE;
     const netAmount = amount - tdsAmount - feeAmount;
+
+    if (netAmount <= 0) {
+      return NextResponse.json(
+        { message: 'Requested amount is too low after fees and TDS.' },
+        { status: 400 }
+      );
+    }
 
     // Check for existing pending withdrawal this month
     const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;

@@ -7,6 +7,7 @@ import Transaction from '@/models/Transaction';
 import Subscription from '@/models/Subscription';
 import AdminConfig from '@/models/AdminConfig';
 import User from '@/models/User';
+import { handleApiError } from '@/lib/api-error';
 
 export async function POST(request) {
   try {
@@ -218,10 +219,6 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error('Claim error:', error);
-    return NextResponse.json(
-      { message: 'Failed to claim rewards: ' + error.message, error: error.stack },
-      { status: 500 }
-    );
+    return handleApiError(error, 'Claim error');
   }
 }

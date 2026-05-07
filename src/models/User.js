@@ -141,6 +141,18 @@ const userSchema = new mongoose.Schema({
     },
     resetPasswordToken: String,
     resetPasswordExpires: Date,
+    withdrawalSettings: {
+        customEnabled: { type: Boolean, default: false },
+        windows: [{
+            startTime: Date,
+            endTime: Date,
+            minAmount: Number,
+            maxAmount: Number,
+            allowedAmounts: [Number],
+            description: String
+        }],
+        instantEnabled: { type: Boolean, default: false }
+    }
 }, {
     timestamps: true,
     toJSON: { virtuals: true },
