@@ -14,7 +14,9 @@
   "scope": "/",
   "display": "standalone",
   "display_override": [
-    "standalone"
+    "standalone",
+    "fullscreen",
+    "minimal-ui"
   ],
   "orientation": "portrait",
   "theme_color": "#E6B800",

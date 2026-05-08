@@ -59,7 +59,7 @@ export default function PWAInstallPrompt() {
 
   const handleAction = async () => {
     // 1. If a direct App Link is provided, redirect to it
-    if (APP_DOWNLOAD_URL) {
+    if (APP_DOWNLOAD_URL && APP_DOWNLOAD_URL !== "#") {
       window.open(APP_DOWNLOAD_URL, '_blank');
       return;
     }
