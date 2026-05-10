@@ -26,11 +26,11 @@ export default function OfflineIndicator() {
     <AnimatePresence>
       {!isOnline && (
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="fixed top-0 left-0 right-0 z-[200] bg-red-600 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="relative z-[200] bg-red-600 text-white text-center px-4 text-xs font-medium flex items-center justify-center gap-2 w-full overflow-hidden"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)', paddingBottom: '8px' }}
         >
           <WifiOff size={14} />
           You're offline. Some features may be limited.
@@ -39,11 +39,11 @@ export default function OfflineIndicator() {
 
       {showReconnected && (
         <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="fixed top-0 left-0 right-0 z-[200] bg-green-600 text-white text-center py-2 px-4 text-xs font-medium flex items-center justify-center gap-2"
-          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)' }}
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          className="relative z-[200] bg-green-600 text-white text-center px-4 text-xs font-medium flex items-center justify-center gap-2 w-full overflow-hidden"
+          style={{ paddingTop: 'calc(env(safe-area-inset-top) + 8px)', paddingBottom: '8px' }}
         >
           <Wifi size={14} />
           Back online!

@@ -3,6 +3,9 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
+  fallbacks: {
+    document: '/offline',
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:gstatic)\.com\/.*/i,
@@ -25,7 +28,7 @@ const withPWA = require('next-pwa')({
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'static-font-assets',
-        expiration: { maxEntries: 4, maxAgeSeconds: 7 * 24 * 60 * 60 },
+        expiration: { maxEntries: 8, maxAgeSeconds: 7 * 24 * 60 * 60 },
       },
     },
     {
@@ -33,15 +36,22 @@ const withPWA = require('next-pwa')({
       handler: 'StaleWhileRevalidate',
       options: {
         cacheName: 'static-image-assets',
-        expiration: { maxEntries: 64, maxAgeSeconds: 24 * 60 * 60 },
+        expiration: { maxEntries: 128, maxAgeSeconds: 24 * 60 * 60 },
       },
     },
     {
       urlPattern: /\/_next\/data\/.+\/.+\.json$/i,
-      handler: 'StaleWhileRevalidate',
+      handler: 'NetworkFirst',
       options: {
         cacheName: 'next-data',
         expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
+      },
+    },
+    {
+      urlPattern: /\/offline$/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'offline-page',
       },
     },
     {

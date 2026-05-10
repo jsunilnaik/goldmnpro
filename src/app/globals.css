@@ -336,21 +336,24 @@ body.pwa-banner-active {
   padding-top: var(--pwa-banner-height);
 }
 
-body.pwa-banner-active nav.fixed {
+body.pwa-banner-active nav.fixed,
+body.pwa-banner-active header.sticky {
   transform: translateY(var(--pwa-banner-height));
   transition: transform 0.3s ease;
 }
 
 /* Ensure navbar transition is always smooth */
-nav.fixed {
-  transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+nav.fixed,
+header.sticky {
+  transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease, top 0.3s ease;
 }
 
 @media (min-width: 768px) {
   body.pwa-banner-active {
     padding-top: 0;
   }
-  body.pwa-banner-active nav.fixed {
+  body.pwa-banner-active nav.fixed,
+  body.pwa-banner-active header.sticky {
     transform: translateY(0);
   }
 }
@@ -358,6 +361,7 @@ nav.fixed {
 /* Admin Impersonation Banner Offset */
 body.impersonating aside.fixed,
 body.impersonating header.fixed,
+body.impersonating header.sticky,
 body.impersonating .fixed-header {
   top: 52px !important;
 }
@@ -369,6 +373,7 @@ body.impersonating aside.fixed {
 @media (max-width: 640px) {
   body.impersonating aside.fixed,
   body.impersonating header.fixed,
+  body.impersonating header.sticky,
   body.impersonating .fixed-header {
     top: 56px !important;
   }
