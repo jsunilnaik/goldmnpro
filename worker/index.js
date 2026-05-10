@@ -1,14 +1,61 @@
+/* eslint-disable no-undef */
 /* eslint-disable no-restricted-globals */
+
+// This is the service worker with the combined offline experience (Offline page + Offline copy of pages)
+const CACHE = "goldmine-offline-v1";
+const offlineFallbackPage = "/offline";
+
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
 // listen to message event from window
 self.addEventListener('message', event => {
-  // HOW TO USE THIS:
-  // window.navigator.serviceWorker.controller.postMessage({
-  //   type: 'SYNC_MINING',
-  //   data: { ... }
-  // });
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+});
+
+self.addEventListener('install', async (event) => {
+  event.waitUntil(
+    caches.open(CACHE)
+      .then((cache) => cache.add(offlineFallbackPage))
+  );
+});
+
+if (workbox.navigationPreload.isSupported()) {
+  workbox.navigationPreload.enable();
+}
+
+// --------------------------------------------------------------------------------
+// OFFLINE COPY OF PAGES (StaleWhileRevalidate)
+// --------------------------------------------------------------------------------
+workbox.routing.registerRoute(
+  new RegExp('/*'),
+  new workbox.strategies.StaleWhileRevalidate({
+    cacheName: CACHE
+  })
+);
+
+// --------------------------------------------------------------------------------
+// NAVIGATION FALLBACK
+// --------------------------------------------------------------------------------
+self.addEventListener('fetch', (event) => {
+  if (event.request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const preloadResp = await event.preloadResponse;
+
+        if (preloadResp) {
+          return preloadResp;
+        }
+
+        const networkResp = await fetch(event.request);
+        return networkResp;
+      } catch (error) {
+        const cache = await caches.open(CACHE);
+        const cachedResp = await cache.match(offlineFallbackPage);
+        return cachedResp;
+      }
+    })());
   }
 });
 
@@ -76,7 +123,6 @@ self.addEventListener('notificationclick', event => {
 // --------------------------------------------------------------------------------
 // PERIODIC BACKGROUND SYNC
 // --------------------------------------------------------------------------------
-// Refreshes data in the background periodically (if supported)
 self.addEventListener('periodicsync', event => {
   if (event.tag === 'content-sync') {
     event.waitUntil(refreshContent());
@@ -85,5 +131,4 @@ self.addEventListener('periodicsync', event => {
 
 async function refreshContent() {
   console.log('[SW] Periodic content refresh...');
-  // Fetch latest rates or balance to have them ready for the user
 }
