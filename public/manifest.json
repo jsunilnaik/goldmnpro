@@ -14,13 +14,11 @@
   "scope": "/",
   "display": "standalone",
   "display_override": [
-    "standalone",
-    "fullscreen",
-    "minimal-ui"
+    "fullscreen"
   ],
   "orientation": "portrait",
   "theme_color": "#E6B800",
-  "background_color": "#E6B800",
+  "background_color": "#FFFFFF",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",

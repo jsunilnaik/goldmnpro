@@ -1,19 +1,11 @@
+/******/ (() => { // webpackBootstrap
 /* eslint-disable no-undef */
 /* eslint-disable no-restricted-globals */
-
-console.log('[GoldMine SW] Service Worker script loaded');
 
 // This is the service worker with the combined offline experience (Offline page + Offline copy of pages)
 const CACHE = "goldmine-offline-v1";
 const offlineFallbackPage = "/offline";
-
-if (typeof workbox === 'undefined') {
-  importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
-}
-
-if (workbox) {
-  console.log('[GoldMine SW] Workbox is loaded');
-}
+importScripts('https://storage.googleapis.com/workbox-cdn/releases/5.1.2/workbox-sw.js');
 
 // listen to message event from window
 self.addEventListener('message', event => {
@@ -21,51 +13,31 @@ self.addEventListener('message', event => {
     self.skipWaiting();
   }
 });
-
-self.addEventListener('install', (event) => {
-  console.log('[GoldMine SW] Install event');
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => {
-        console.log('[GoldMine SW] Caching offline fallback page');
-        return cache.add(offlineFallbackPage);
-      })
-      .then(() => self.skipWaiting())
-  );
+self.addEventListener('install', async event => {
+  event.waitUntil(caches.open(CACHE).then(cache => cache.add(offlineFallbackPage)));
 });
-
-self.addEventListener('activate', (event) => {
-  console.log('[GoldMine SW] Activate event');
-  event.waitUntil(clients.claim());
-});
-
-if (workbox && workbox.navigationPreload.isSupported()) {
+if (workbox.navigationPreload.isSupported()) {
   workbox.navigationPreload.enable();
 }
 
 // --------------------------------------------------------------------------------
 // OFFLINE COPY OF PAGES (StaleWhileRevalidate)
 // --------------------------------------------------------------------------------
-workbox.routing.registerRoute(
-  new RegExp('/*'),
-  new workbox.strategies.StaleWhileRevalidate({
-    cacheName: CACHE
-  })
-);
+workbox.routing.registerRoute(new RegExp('/*'), new workbox.strategies.StaleWhileRevalidate({
+  cacheName: CACHE
+}));
 
 // --------------------------------------------------------------------------------
 // NAVIGATION FALLBACK
 // --------------------------------------------------------------------------------
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   if (event.request.mode === 'navigate') {
     event.respondWith((async () => {
       try {
         const preloadResp = await event.preloadResponse;
-
         if (preloadResp) {
           return preloadResp;
         }
-
         const networkResp = await fetch(event.request);
         return networkResp;
       } catch (error) {
@@ -86,7 +58,6 @@ self.addEventListener('sync', event => {
     event.waitUntil(syncMiningClaims());
   }
 });
-
 async function syncMiningClaims() {
   console.log('[SW] Syncing mining claims...');
   try {
@@ -102,8 +73,10 @@ async function syncMiningClaims() {
 // PUSH NOTIFICATIONS
 // --------------------------------------------------------------------------------
 self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : { title: 'GoldMine Pro', body: 'New update available!' };
-  
+  const data = event.data ? event.data.json() : {
+    title: 'GoldMine Pro',
+    body: 'New update available!'
+  };
   const options = {
     body: data.body,
     icon: '/icons/icon-192-maskable.png',
@@ -112,30 +85,27 @@ self.addEventListener('push', event => {
     data: {
       url: data.url || '/dashboard'
     },
-    actions: [
-      { action: 'open', title: 'Open App' },
-      { action: 'close', title: 'Dismiss' }
-    ]
+    actions: [{
+      action: 'open',
+      title: 'Open App'
+    }, {
+      action: 'close',
+      title: 'Dismiss'
+    }]
   };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  event.waitUntil(self.registration.showNotification(data.title, options));
 });
-
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-
   if (event.action === 'close') return;
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url === '/' && 'focus' in client) return client.focus();
-      }
-      if (clients.openWindow) return clients.openWindow(event.notification.data.url);
-    })
-  );
+  event.waitUntil(clients.matchAll({
+    type: 'window'
+  }).then(clientList => {
+    for (const client of clientList) {
+      if (client.url === '/' && 'focus' in client) return client.focus();
+    }
+    if (clients.openWindow) return clients.openWindow(event.notification.data.url);
+  }));
 });
 
 // --------------------------------------------------------------------------------
@@ -146,7 +116,8 @@ self.addEventListener('periodicsync', event => {
     event.waitUntil(refreshContent());
   }
 });
-
 async function refreshContent() {
   console.log('[SW] Periodic content refresh...');
 }
+/******/ })()
+;
