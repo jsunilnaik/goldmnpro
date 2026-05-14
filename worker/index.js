@@ -88,13 +88,15 @@ self.addEventListener('sync', event => {
 });
 
 async function syncMiningClaims() {
-  console.log('[SW] Syncing mining claims...');
+  console.log('[GoldMine SW] Background Sync: Processing mining claims...');
   try {
-    // 1. Get queued claims from IndexedDB (implementation needed on client)
-    // 2. Fetch /api/mining/claim for each
-    // 3. Notify user on success
+    // In production, we would use idb-keyval or similar to get queued actions
+    // For now, we log the attempt. This prevents the sync from retrying indefinitely
+    // if the logic isn't fully connected yet.
+    console.log('[GoldMine SW] Sync logic triggered. Pending client-side IndexedDB implementation.');
+    return Promise.resolve();
   } catch (error) {
-    console.error('[SW] Sync failed:', error);
+    console.error('[GoldMine SW] Background Sync failed:', error);
   }
 }
 

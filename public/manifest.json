@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "GoldMine Pro: Digital Mining & Earnings",
+  "name": "GoldMine Pro - Premium Digital Mining",
   "short_name": "GoldMine Pro",
-  "description": "Premium Digital Gold Mining Platform. Mine, track real-time earnings, and securely withdraw your rewards on the go.",
+  "description": "The world's most advanced digital gold mining platform. Mine, earn, and withdraw rewards with industry-leading security.",
   "lang": "en-US",
   "dir": "ltr",
   "categories": [
@@ -117,6 +117,6 @@
   "prefer_related_applications": false,
   "related_applications": [],
   "launch_handler": {
-    "client_mode": ""
+    "client_mode": "focus-existing"
   }
 }

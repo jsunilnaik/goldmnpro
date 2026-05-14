@@ -60,7 +60,7 @@ export const metadata = {
     type: 'website',
     siteName: 'GoldMine Pro',
     title: 'GoldMine Pro - Digital Gold Mining Platform',
-    description: 'Premium digital gold mining platform. Start your mining journey today!',
+    description: 'The world\'s most advanced digital gold mining platform. Mine, earn, and withdraw rewards with industry-leading security.',
     images: ['/og-image.png'],
   },
 };
@@ -72,7 +72,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang="en" className={`${inter.variable} ${poppins.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
-        <link rel="apple-touch-icon" href="/icons/icon-192-maskable.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
