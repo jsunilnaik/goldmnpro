@@ -316,7 +316,7 @@ export default function PlansPage() {
                 <div className="w-5 h-5 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
                   <Clock size={10} className="text-blue-600" />
                 </div>
-                <span className="text-dark-200 font-medium">Total Sessions: <strong className="text-blue-600">{(plan.duration * (plan.dailySessionLimit || 1))} Sessions</strong></span>
+                <span className="text-dark-200 font-medium">Total Sessions: <strong className="text-blue-600">{plan.duration} Sessions</strong></span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">

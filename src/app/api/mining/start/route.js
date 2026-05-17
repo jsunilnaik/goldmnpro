@@ -69,7 +69,7 @@ export async function POST(request) {
     // Check dynamic session quota (Allows for fractional limits like 10 sessions / 30 days)
     const startDate = new Date(subscription.startDate || subscription.createdAt);
     const daysElapsed = Math.floor((new Date() - startDate) / (1000 * 60 * 60 * 24));
-    const dailyFrequency = subscription.plan.dailySessionLimit || 1;
+    const dailyFrequency = 1; // Enforced: 1 session per day
     
     // Total sessions allowed up to today (including carry-over)
     const totalAllowedToDate = Math.ceil((daysElapsed + 1) * dailyFrequency);

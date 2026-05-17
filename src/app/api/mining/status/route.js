@@ -65,7 +65,7 @@ export async function GET(request) {
     const wallet = await Wallet.findOne({ user: user._id }).select('pendingMaturityValue lastMaturityReleaseAt createdAt').lean();
 
     // Dynamic Quota Logic (Carry-over & Fractional support)
-    const dailyFrequency = subscription?.plan?.dailySessionLimit || 1;
+    const dailyFrequency = 1; // Enforced: 1 session per day
     const totalAllowedToDate = Math.ceil((daysElapsed + 1) * dailyFrequency);
     const sessionsCompleted = subscription?.sessionsCompleted || 0;
     
