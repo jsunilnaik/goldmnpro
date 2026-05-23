@@ -17,6 +17,7 @@ import {
   Loader2,
   Info,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function WithdrawPage() {
   const { user, wallet, refreshWallet } = useAuth();
@@ -315,32 +316,34 @@ export default function WithdrawPage() {
         </h3>
 
         <div className="space-y-2.5">
-          {withdrawals.map((wd) => (
-            <div key={wd._id} className="glass-card p-4 flex items-center gap-4 border-dark-800 shadow-sm hover:translate-x-1 transition-transform">
-              <div className={`px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider ${statusColors[wd.status]}`}>
-                {wd.status}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-mono font-bold text-dark-100">₹{wd.amount?.toLocaleString('en-IN')}</p>
-                <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider mt-0.5">
-                  {new Date(wd.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </p>
-                {wd.status === 'rejected' && wd.rejectionReason && (
-                  <p className="text-[10px] text-red-500 font-bold mt-1 italic">
-                    Reason: {wd.rejectionReason}
+          {loading ? (
+            <ListSkeleton rows={4} />
+          ) : withdrawals.length > 0 ? (
+            withdrawals.map((wd) => (
+              <div key={wd._id} className="glass-card p-4 flex items-center gap-4 border-dark-800 shadow-sm hover:translate-x-1 transition-transform">
+                <div className={`px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider ${statusColors[wd.status]}`}>
+                  {wd.status}
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-mono font-bold text-dark-100">₹{wd.amount?.toLocaleString('en-IN')}</p>
+                  <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider mt-0.5">
+                    {new Date(wd.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </p>
+                  {wd.status === 'rejected' && wd.rejectionReason && (
+                    <p className="text-[10px] text-red-500 font-bold mt-1 italic">
+                      Reason: {wd.rejectionReason}
+                    </p>
+                  )}
+                </div>
+                {wd.netAmount && (
+                  <div className="text-right">
+                    <p className="text-[9px] text-dark-500 font-bold uppercase tracking-wider">Net Amount</p>
+                    <p className="text-sm font-mono font-bold text-green-600">₹{wd.netAmount?.toLocaleString('en-IN')}</p>
+                  </div>
                 )}
               </div>
-              {wd.netAmount && (
-                <div className="text-right">
-                  <p className="text-[9px] text-dark-500 font-bold uppercase tracking-wider">Net Amount</p>
-                  <p className="text-sm font-mono font-bold text-green-600">₹{wd.netAmount?.toLocaleString('en-IN')}</p>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {withdrawals.length === 0 && (
+            ))
+          ) : (
             <div className="glass-card p-6 text-center">
               <p className="text-dark-400 text-sm">No withdrawals yet</p>
             </div>

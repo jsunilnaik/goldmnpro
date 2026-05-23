@@ -3,6 +3,9 @@ import { SignJWT, jwtVerify, decodeJwt } from 'jose';
 export async function signToken(payload) {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('CRITICAL: JWT_SECRET is not defined in production!');
+    }
     console.warn('⚠️ JWT_SECRET is not defined. Using fallback secret.');
   }
   const JWT_SECRET = new TextEncoder().encode(secret || 'your-fallback-secret-for-dev');
@@ -22,6 +25,9 @@ export async function signToken(payload) {
 
 export async function verifyToken(token) {
   const secret = process.env.JWT_SECRET;
+  if (!secret && process.env.NODE_ENV === 'production') {
+    throw new Error('CRITICAL: JWT_SECRET is not defined in production!');
+  }
   const JWT_SECRET = new TextEncoder().encode(secret || 'your-fallback-secret-for-dev');
   
   try {

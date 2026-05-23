@@ -98,6 +98,5 @@ subscriptionSchema.virtual('isExpired').get(function() {
 // High performance indexes
 subscriptionSchema.index({ user: 1, status: 1 });
 subscriptionSchema.index({ user: 1, endDate: -1 });
-subscriptionSchema.index({ utr: 1 }, { unique: true, sparse: true });
 
 export default mongoose.models.Subscription || mongoose.model('Subscription', subscriptionSchema);

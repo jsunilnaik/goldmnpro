@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { getEmbedUrl } from '@/lib/utils';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminMediaPage() {
   const [mediaItems, setMediaItems] = useState([]);
@@ -299,9 +300,10 @@ export default function AdminMediaPage() {
 
       {/* Media List */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <Loader2 className="animate-spin text-gold-600" size={40} />
-          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Syncing Media...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : mediaItems.length === 0 ? (
         <div className="text-center py-20 bg-slate-50 rounded-3xl border-2 border-slate-200 border-dashed">

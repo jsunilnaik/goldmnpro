@@ -488,9 +488,32 @@ export default function AdminUsersPage() {
             </thead>
             <tbody className="divide-y divide-dark-900/5">
               {loading ? (
-                [...Array(5)].map((_, i) => (
+                [...Array(10)].map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={8} className="px-6 py-4"><div className="h-10 bg-slate-50 rounded-xl" /></td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-slate-100" />
+                        <div>
+                          <div className="h-4 bg-slate-100 rounded w-24 mb-1" />
+                          <div className="h-2.5 bg-slate-100 rounded w-32" />
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 hidden lg:table-cell"><div className="h-3 bg-slate-100 rounded w-16" /></td>
+                    <td className="px-6 py-4 hidden lg:table-cell"><div className="h-3 bg-slate-100 rounded w-20" /></td>
+                    <td className="px-6 py-4 hidden lg:table-cell"><div className="h-4 bg-slate-100 rounded w-16" /></td>
+                    <td className="px-6 py-4 hidden lg:table-cell"><div className="h-4 bg-slate-100 rounded w-16" /></td>
+                    <td className="px-6 py-4 hidden md:table-cell">
+                      <div className="h-3 bg-slate-100 rounded w-16 mb-1" />
+                      <div className="h-2 bg-slate-100 rounded w-12" />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="h-3 bg-slate-100 rounded-full w-12" />
+                        <div className="h-3 bg-slate-100 rounded-full w-14" />
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right"><div className="w-6 h-6 bg-slate-100 rounded-lg ml-auto" /></td>
                   </tr>
                 ))
               ) : users.length === 0 ? (

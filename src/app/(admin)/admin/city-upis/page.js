@@ -9,6 +9,7 @@ import {
   AlertCircle, Save, Loader2, CheckCircle2, XCircle,
   Users, BarChart2, ChevronDown, X, Info, Zap,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 const MAX_UPIS = 20;
 
@@ -243,10 +244,7 @@ export default function CityUpiManagement() {
 
       {/* ── Rules List ── */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="w-10 h-10 text-gold-500 animate-spin" />
-          <p className="text-dark-400 font-medium animate-pulse">Loading pools...</p>
-        </div>
+        <ListSkeleton rows={3} />
       ) : rules.length === 0 ? (
         <div className="bg-white border border-dark-800 rounded-2xl p-12 text-center">
           <div className="w-16 h-16 bg-dark-900 rounded-full flex items-center justify-center mx-auto mb-4">

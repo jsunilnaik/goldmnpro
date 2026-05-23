@@ -21,6 +21,7 @@ import {
   Trash2,
   Ban,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminSubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -188,12 +189,7 @@ export default function AdminSubscriptionsPage() {
       {/* Subscriptions List */}
       <div className="space-y-3">
         {loading ? (
-          [...Array(3)].map((_, i) => (
-            <div key={i} className="glass-card p-6 animate-pulse border-dark-900/10 shadow-sm">
-              <div className="h-6 bg-slate-100 rounded-xl w-32 mb-3" />
-              <div className="h-4 bg-slate-100 rounded-xl w-48" />
-            </div>
-          ))
+          <ListSkeleton rows={5} />
         ) : subscriptions.length > 0 ? (
           subscriptions.map((sub) => (
             <motion.div

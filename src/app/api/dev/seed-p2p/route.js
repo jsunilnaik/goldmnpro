@@ -8,7 +8,7 @@ import Transaction from '@/models/Transaction';
 import mongoose from 'mongoose';
 
 export async function GET(request) {
-  if (process.env.NODE_ENV !== 'development' && !process.env.NEXT_PUBLIC_DEV_MODE) {
+  if (process.env.NODE_ENV !== 'development') {
     return NextResponse.json({ message: 'Only available in dev mode' }, { status: 403 });
   }
 

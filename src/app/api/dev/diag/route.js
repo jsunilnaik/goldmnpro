@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 
 export async function GET() {
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ message: 'Only available in dev mode' }, { status: 403 });
+  }
   const info = {
     env: {
       MONGODB_URI: process.env.MONGODB_URI ? 'SET (length: ' + process.env.MONGODB_URI.length + ')' : 'MISSING',

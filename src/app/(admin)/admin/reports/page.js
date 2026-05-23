@@ -11,6 +11,7 @@ import {
   Download,
   Loader2,
 } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminReportsPage() {
   const [period, setPeriod] = useState('30days');
@@ -61,9 +62,11 @@ export default function AdminReportsPage() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-24 glass-card border-dark-900/10 shadow-sm">
-          <Loader2 className="w-10 h-10 animate-spin text-red-500 mb-4" />
-          <p className="text-dark-500 font-bold uppercase tracking-widest text-[10px]">Compiling report data...</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : (
         <>

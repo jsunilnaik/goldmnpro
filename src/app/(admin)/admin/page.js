@@ -23,6 +23,7 @@ import {
     Loader2
 } from 'lucide-react';
 import { getAllStates, getCitiesForState } from '@/lib/india-cities';
+import { CardSkeleton, ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminDashboardPage() {
     const [stats, setStats] = useState(null);
@@ -129,18 +130,6 @@ export default function AdminDashboardPage() {
         },
     ];
 
-    if (loading) {
-        return (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[...Array(6)].map((_, i) => (
-                    <div key={i} className="glass-card p-6 animate-pulse">
-                        <div className="h-4 bg-slate-100 rounded w-24 mb-3" />
-                        <div className="h-8 bg-slate-100 rounded w-32" />
-                    </div>
-                ))}
-            </div>
-        );
-    }
 
     return (
         <div className="space-y-6">
@@ -211,27 +200,38 @@ export default function AdminDashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                {statCards.map((stat, i) => {
-                    const Icon = stat.icon;
-                    return (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="glass-card p-4 md:p-5 border-dark-900/10 shadow-sm"
-                        >
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-[10px] text-dark-500 uppercase tracking-widest font-bold">{stat.title}</span>
-                                <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center border border-current opacity-80`}>
-                                    <Icon size={16} className={stat.color} />
+                {loading ? (
+                    <>
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                        <CardSkeleton />
+                    </>
+                ) : (
+                    statCards.map((stat, i) => {
+                        const Icon = stat.icon;
+                        return (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.05 }}
+                                className="glass-card p-4 md:p-5 border-dark-900/10 shadow-sm"
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] text-dark-500 uppercase tracking-widest font-bold">{stat.title}</span>
+                                    <div className={`w-8 h-8 rounded-lg ${stat.bg} flex items-center justify-center border border-current opacity-80`}>
+                                        <Icon size={16} className={stat.color} />
+                                    </div>
                                 </div>
-                            </div>
-                            <p className="text-xl md:text-2xl font-bold font-mono text-dark-100">{stat.value}</p>
-                            <p className="text-[10px] text-dark-500 mt-1 font-bold">{stat.change}</p>
-                        </motion.div>
-                    );
-                })}
+                                <p className="text-xl md:text-2xl font-bold font-mono text-dark-100">{stat.value}</p>
+                                <p className="text-[10px] text-dark-500 mt-1 font-bold">{stat.change}</p>
+                            </motion.div>
+                        );
+                    })
+                )}
             </div>
 
             {/* Two Column Layout */}
@@ -243,21 +243,24 @@ export default function AdminDashboardPage() {
                         Recent Signups
                     </h3>
                     <div className="space-y-3">
-                        {recentUsers.map((u, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-dark-900/5">
-                                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 text-xs font-bold border border-blue-500/20">
-                                    {u.fullName?.charAt(0).toUpperCase()}
+                        {loading ? (
+                            <ListSkeleton rows={3} />
+                        ) : recentUsers.length > 0 ? (
+                            recentUsers.map((u, i) => (
+                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-dark-900/5">
+                                    <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 text-xs font-bold border border-blue-500/20">
+                                        {u.fullName?.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold truncate text-dark-100">{u.fullName}</p>
+                                        <p className="text-[10px] text-dark-500 font-medium">{u.email}</p>
+                                    </div>
+                                    <span className="text-[10px] text-dark-500 font-bold">
+                                        {new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                                    </span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold truncate text-dark-100">{u.fullName}</p>
-                                    <p className="text-[10px] text-dark-500 font-medium">{u.email}</p>
-                                </div>
-                                <span className="text-[10px] text-dark-500 font-bold">
-                                    {new Date(u.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                                </span>
-                            </div>
-                        ))}
-                        {recentUsers.length === 0 && (
+                            ))
+                        ) : (
                             <p className="text-dark-500 text-sm text-center py-8 font-medium">No recent signups</p>
                         )}
                     </div>
@@ -270,23 +273,26 @@ export default function AdminDashboardPage() {
                         Pending Withdrawals
                     </h3>
                     <div className="space-y-3">
-                        {pendingWithdrawals.map((wd, i) => (
-                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-dark-900/5">
-                                <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600 text-xs font-bold border border-yellow-500/20">
-                                    ₹
+                        {loading ? (
+                            <ListSkeleton rows={3} />
+                        ) : pendingWithdrawals.length > 0 ? (
+                            pendingWithdrawals.map((wd, i) => (
+                                <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-dark-900/5">
+                                    <div className="w-8 h-8 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-600 text-xs font-bold border border-yellow-500/20">
+                                        ₹
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-mono font-bold text-dark-100">
+                                            ₹{wd.amount?.toLocaleString('en-IN')}
+                                        </p>
+                                        <p className="text-[10px] text-dark-500 font-medium">{wd.user?.fullName || 'User'}</p>
+                                    </div>
+                                    <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-yellow-500/10 text-yellow-600 border border-yellow-500/10">
+                                        Pending
+                                    </span>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-mono font-bold text-dark-100">
-                                        ₹{wd.amount?.toLocaleString('en-IN')}
-                                    </p>
-                                    <p className="text-[10px] text-dark-500 font-medium">{wd.user?.fullName || 'User'}</p>
-                                </div>
-                                <span className="px-2 py-1 rounded-lg text-[10px] font-bold bg-yellow-500/10 text-yellow-600 border border-yellow-500/10">
-                                    Pending
-                                </span>
-                            </div>
-                        ))}
-                        {pendingWithdrawals.length === 0 && (
+                            ))
+                        ) : (
                             <p className="text-dark-500 text-sm text-center py-8 font-medium">No pending withdrawals</p>
                         )}
                     </div>

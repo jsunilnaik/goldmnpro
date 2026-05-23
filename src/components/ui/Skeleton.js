@@ -91,3 +91,23 @@ export function TableSkeleton({ rows = 5, cols = 4 }) {
     </div>
   );
 }
+
+/**
+ * Use this variant when rendering inside a <tbody> element.
+ * It renders proper <tr>/<td> elements to avoid hydration errors.
+ */
+export function TableRowSkeleton({ rows = 5, cols = 4 }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="animate-pulse">
+          {Array.from({ length: cols }).map((_, j) => (
+            <td key={j} className="px-6 py-4">
+              <div className="h-4 bg-dark-700/50 rounded w-full" />
+            </td>
+          ))}
+        </tr>
+      ))}
+    </>
+  );
+}

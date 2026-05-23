@@ -22,6 +22,7 @@ import {
   ArrowDownToLine,
   Smartphone,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminP2PMatchesPage() {
   const [matches, setMatches] = useState([]);
@@ -207,9 +208,7 @@ export default function AdminP2PMatchesPage() {
       {/* Matches List */}
       <div className="space-y-4">
         {loading ? (
-          [...Array(3)].map((_, i) => (
-             <div key={i} className="glass-card p-8 animate-pulse border-dark-900/10 shadow-sm h-32" />
-          ))
+          <ListSkeleton rows={3} />
         ) : matches.length > 0 ? (
           matches.map((match) => (
             <motion.div

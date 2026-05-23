@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Upload, MessageSquare, Image as ImageIcon, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState([]);
@@ -201,9 +202,10 @@ export default function AdminReviewsPage() {
       )}
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <Loader2 className="animate-spin text-gold-600" size={40} />
-          <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Loading reviews...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
         </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-20 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">

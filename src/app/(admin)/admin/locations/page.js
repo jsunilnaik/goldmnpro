@@ -20,6 +20,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { TableRowSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminLocationsPage() {
   const [locations, setLocations] = useState([]);
@@ -224,11 +225,7 @@ export default function AdminLocationsPage() {
             </thead>
             <tbody className="divide-y divide-dark-800/30">
               {loading && filteredLocations.length === 0 ? (
-                [...Array(6)].map((_, i) => (
-                  <tr key={i} className="animate-pulse">
-                    <td colSpan={6} className="px-6 py-6"><div className="h-4 bg-dark-900 rounded-full w-2/3" /></td>
-                  </tr>
-                ))
+                <TableRowSkeleton cols={6} rows={6} />
               ) : filteredLocations.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-20 text-center">

@@ -14,19 +14,6 @@ async function connectDB() {
     throw new Error("Please define the MONGODB_URI environment variable");
   }
 
-  // DNS FIX for Atlas SRV records (Node.js environments only)
-  if (typeof process !== "undefined" && process.versions?.node && process.env.USE_GOOGLE_DNS === 'true') {
-    try {
-      const dns = await import("dns");
-      if (dns && typeof dns.setServers === "function") {
-        console.log("[MongoDB] Forcing Google DNS (8.8.8.8)...");
-        dns.setServers(["8.8.8.8", "8.8.4.4"]);
-      }
-    } catch (e) {
-      console.warn("[MongoDB] Failed to set Google DNS, falling back to system DNS.");
-    }
-  }
-
   if (cached.conn) {
     // Only return if fully connected. Cloudflare Edge isolates can sleep and wake up with dead sockets.
     if (cached.conn.connection.readyState === 1) {
@@ -41,15 +28,33 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
+    // DNS FIX for Atlas SRV records (Node.js environments only)
+    if (typeof process !== "undefined" && process.versions?.node && process.env.USE_GOOGLE_DNS === 'true') {
+      try {
+        const dns = await import("dns");
+        if (dns && typeof dns.setServers === "function") {
+          console.log("[MongoDB] Forcing Google DNS (8.8.8.8)...");
+          dns.setServers(["8.8.8.8", "8.8.4.4"]);
+        }
+      } catch (e) {
+        console.warn("[MongoDB] Failed to set Google DNS, falling back to system DNS.");
+      }
+    }
+
     const opts = {
       bufferCommands: false,
       // Add timeouts so frozen edge workers don't hang forever
-      serverSelectionTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 10000, // Reduced from 30s for faster failure detection
       socketTimeoutMS: 45000,
-      // Serverless optimizations to prevent connection exhaustion
-      maxPoolSize: 1,
-      minPoolSize: 0,
-      maxIdleTimeMS: 10000,
+      // Improved pool settings for better performance
+      maxPoolSize: 5,
+      minPoolSize: 1,
+      maxIdleTimeMS: 30000,
+      // Prevents connection errors in watch mode
+      retryWrites: true,
+      retryReads: true,
+      // Better error handling
+      heartbeatFrequencyMS: 10000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {

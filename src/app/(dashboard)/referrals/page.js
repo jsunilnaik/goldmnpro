@@ -19,6 +19,7 @@ import {
   Layers,
   Zap,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function ReferralsPage() {
   const { user, wallet } = useAuth();
@@ -125,21 +126,31 @@ export default function ReferralsPage() {
 
       {/* Network Overview Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
-          <Network size={18} className="text-blue-500 mx-auto mb-2" />
-          <p className="text-xl font-bold text-dark-50">{totalNetworkSize}</p>
-          <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Network</p>
-        </div>
-        <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
-          <TrendingUp size={18} className="text-green-500 mx-auto mb-2" />
-          <p className="text-xl font-bold font-mono text-dark-50">₹{totalEarnings.toLocaleString('en-IN')}</p>
-          <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Earned</p>
-        </div>
-        <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
-          <Users size={18} className="text-gold-600 mx-auto mb-2" />
-          <p className="text-xl font-bold text-dark-50">{directReferrals.length}</p>
-          <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Direct</p>
-        </div>
+        {loading ? (
+          <>
+            <div className="glass-card p-4 h-24 animate-pulse border-dark-800 shadow-sm" />
+            <div className="glass-card p-4 h-24 animate-pulse border-dark-800 shadow-sm" />
+            <div className="glass-card p-4 h-24 animate-pulse border-dark-800 shadow-sm" />
+          </>
+        ) : (
+          <>
+            <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
+              <Network size={18} className="text-blue-500 mx-auto mb-2" />
+              <p className="text-xl font-bold text-dark-50">{totalNetworkSize}</p>
+              <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Network</p>
+            </div>
+            <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
+              <TrendingUp size={18} className="text-green-500 mx-auto mb-2" />
+              <p className="text-xl font-bold font-mono text-dark-50">₹{totalEarnings.toLocaleString('en-IN')}</p>
+              <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Earned</p>
+            </div>
+            <div className="glass-card p-4 text-center border-dark-800 shadow-sm">
+              <Users size={18} className="text-gold-600 mx-auto mb-2" />
+              <p className="text-xl font-bold text-dark-50">{directReferrals.length}</p>
+              <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">Direct</p>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Referral Code Card */}
@@ -220,7 +231,9 @@ export default function ReferralsPage() {
                 <h3 className="text-sm font-bold text-dark-50">Level Breakdown</h3>
               </div>
 
-              {levelBreakdown.length > 0 ? (
+              {loading ? (
+                <ListSkeleton rows={3} />
+              ) : levelBreakdown.length > 0 ? (
                 <div className="space-y-3">
                   {levelBreakdown.map((level) => {
                     const color = getLevelColor(level.level);
@@ -261,50 +274,56 @@ export default function ReferralsPage() {
             </div>
 
             {/* Your Downline Tree */}
-            {downline.length > 0 && (
+            {(loading || downline.length > 0) && (
               <div className="glass-card p-5 border-dark-800 shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <ChevronDown size={16} className="text-violet-500" />
                   <h3 className="text-sm font-bold text-dark-50">Your Downline</h3>
-                  <span className="text-[10px] ml-auto px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-500 font-bold border border-violet-500/20">
-                    {downline.reduce((sum, l) => sum + l.users.length, 0)} users
-                  </span>
+                  {!loading && (
+                    <span className="text-[10px] ml-auto px-2 py-0.5 rounded-md bg-violet-500/10 text-violet-500 font-bold border border-violet-500/20">
+                      {downline.reduce((sum, l) => sum + l.users.length, 0)} users
+                    </span>
+                  )}
                 </div>
-                <div className="space-y-3">
-                  {downline.map((levelGroup) => {
-                    const color = getLevelColor(levelGroup.level);
-                    return (
-                      <div key={levelGroup.level} className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.bg} ${color.text} ${color.border} border`}>
-                            Level {levelGroup.level}
-                          </span>
-                          <span className="text-[10px] text-dark-500 font-bold">
-                            {levelGroup.users.length} {levelGroup.users.length === 1 ? 'user' : 'users'}
-                          </span>
-                        </div>
-                        <div className="space-y-1.5 pl-3 border-l-2 border-dark-900/10">
-                          {levelGroup.users.map((u, j) => (
-                            <div key={j} className="flex items-center gap-2.5 py-1.5">
-                              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${color.bg} ${color.text} ${color.border} border`}>
-                                {u.fullName?.charAt(0)}
+                {loading ? (
+                  <ListSkeleton rows={3} />
+                ) : (
+                  <div className="space-y-3">
+                    {downline.map((levelGroup) => {
+                      const color = getLevelColor(levelGroup.level);
+                      return (
+                        <div key={levelGroup.level} className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${color.bg} ${color.text} ${color.border} border`}>
+                              Level {levelGroup.level}
+                            </span>
+                            <span className="text-[10px] text-dark-500 font-bold">
+                              {levelGroup.users.length} {levelGroup.users.length === 1 ? 'user' : 'users'}
+                            </span>
+                          </div>
+                          <div className="space-y-1.5 pl-3 border-l-2 border-dark-900/10">
+                            {levelGroup.users.map((u, j) => (
+                              <div key={j} className="flex items-center gap-2.5 py-1.5">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold ${color.bg} ${color.text} ${color.border} border`}>
+                                  {u.fullName?.charAt(0)}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-bold text-dark-100 truncate">{u.fullName}</p>
+                                  <p className="text-[10px] text-dark-500 font-medium">
+                                    {u.referralCode}{u.referralCount > 0 ? ` • +${u.referralCount} refs` : ''}
+                                  </p>
+                                </div>
+                                <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold uppercase ${u.hasActivePlan ? 'bg-green-500/10 text-green-500 border border-green-500/10' : 'bg-dark-900/5 text-dark-400 border border-dark-900/10'}`}>
+                                  {u.planName || 'Free'}
+                                </span>
                               </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-bold text-dark-100 truncate">{u.fullName}</p>
-                                <p className="text-[10px] text-dark-500 font-medium">
-                                  {u.referralCode}{u.referralCount > 0 ? ` • +${u.referralCount} refs` : ''}
-                                </p>
-                              </div>
-                              <span className={`text-[9px] px-2 py-0.5 rounded-md font-bold uppercase ${u.hasActivePlan ? 'bg-green-500/10 text-green-500 border border-green-500/10' : 'bg-dark-900/5 text-dark-400 border border-dark-900/10'}`}>
-                                {u.planName || 'Free'}
-                              </span>
-                            </div>
-                          ))}
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
@@ -341,32 +360,35 @@ export default function ReferralsPage() {
           >
             <h3 className="text-sm font-bold text-dark-50">Direct Referrals (Level 1)</h3>
             <div className="space-y-2.5">
-              {directReferrals.map((ref, i) => (
-                <div key={i} className="glass-card p-4 flex items-center gap-4 border-dark-800 shadow-sm">
-                  <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 text-sm font-bold border border-blue-500/20">
-                    {ref.fullName?.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-dark-50 truncate">{ref.fullName}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">
-                        {new Date(ref.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </p>
-                      {(ref.referralCount || 0) > 0 && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500 font-bold border border-violet-500/10">
-                          +{ref.referralCount} sub-referrals
-                        </span>
-                      )}
+              {loading ? (
+                <ListSkeleton rows={4} />
+              ) : directReferrals.length > 0 ? (
+                directReferrals.map((ref, i) => (
+                  <div key={i} className="glass-card p-4 flex items-center gap-4 border-dark-800 shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 text-sm font-bold border border-blue-500/20">
+                      {ref.fullName?.charAt(0)}
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-dark-50 truncate">{ref.fullName}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-[10px] text-dark-500 font-bold uppercase tracking-wider">
+                          {new Date(ref.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </p>
+                        {(ref.referralCount || 0) > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-500/10 text-violet-500 font-bold border border-violet-500/10">
+                            +{ref.referralCount} sub-referrals
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider ${
+                      ref.currentPlan ? 'bg-green-500/10 text-green-600 border border-green-500/10' : 'bg-slate-100 text-dark-400 border border-dark-900/5'
+                    }`}>
+                      {ref.currentPlan ? 'Active' : 'Free'}
+                    </span>
                   </div>
-                  <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-wider ${
-                    ref.currentPlan ? 'bg-green-500/10 text-green-600 border border-green-500/10' : 'bg-slate-100 text-dark-400 border border-dark-900/5'
-                  }`}>
-                    {ref.currentPlan ? 'Active' : 'Free'}
-                  </span>
-                </div>
-              ))}
-              {directReferrals.length === 0 && (
+                ))
+              ) : (
                 <div className="glass-card p-8 text-center border-dark-800 shadow-sm">
                   <Users size={32} className="text-dark-700 mx-auto mb-3" />
                   <p className="text-dark-500 text-sm font-medium">No referrals yet. Start sharing your code!</p>
@@ -386,32 +408,35 @@ export default function ReferralsPage() {
           >
             <h3 className="text-sm font-bold text-dark-50">Recent Commissions</h3>
             <div className="space-y-2">
-              {recentCommissions.map((tx, i) => {
-                const level = tx.metadata?.level || 1;
-                const color = getLevelColor(level);
+              {loading ? (
+                <ListSkeleton rows={4} />
+              ) : recentCommissions.length > 0 ? (
+                recentCommissions.map((tx, i) => {
+                  const level = tx.metadata?.level || 1;
+                  const color = getLevelColor(level);
 
-                return (
-                  <div key={i} className="glass-card p-4 border-dark-800 shadow-sm">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color.bg} ${color.text} ${color.border} border`}>
-                          <span className="text-[10px] font-bold">L{level}</span>
+                  return (
+                    <div key={i} className="glass-card p-4 border-dark-800 shadow-sm">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color.bg} ${color.text} ${color.border} border`}>
+                            <span className="text-[10px] font-bold">L{level}</span>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-dark-100 truncate">{tx.description}</p>
+                            <p className="text-[10px] text-dark-500 font-bold mt-0.5">
+                              {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-bold text-dark-100 truncate">{tx.description}</p>
-                          <p className="text-[10px] text-dark-500 font-bold mt-0.5">
-                            {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
+                        <span className="text-sm font-bold font-mono text-green-500 shrink-0 ml-2">
+                          +₹{tx.amount?.toLocaleString('en-IN')}
+                        </span>
                       </div>
-                      <span className="text-sm font-bold font-mono text-green-500 shrink-0 ml-2">
-                        +₹{tx.amount?.toLocaleString('en-IN')}
-                      </span>
                     </div>
-                  </div>
-                );
-              })}
-              {recentCommissions.length === 0 && (
+                  );
+                })
+              ) : (
                 <div className="glass-card p-8 text-center border-dark-800 shadow-sm">
                   <TrendingUp size={32} className="text-dark-700 mx-auto mb-3" />
                   <p className="text-dark-500 text-sm font-medium">No commissions yet. They&apos;ll appear here when your network grows!</p>

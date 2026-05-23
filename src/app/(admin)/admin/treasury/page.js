@@ -8,6 +8,7 @@ import {
   ShieldAlert, ShieldCheck, Activity, BarChart3, AlertTriangle
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function TreasuryDashboard() {
   const { user } = useAuth();
@@ -66,8 +67,16 @@ export default function TreasuryDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       </div>
     );
   }

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Loader2,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function WalletPage() {
   const { wallet, refreshWallet } = useAuth();
@@ -155,33 +156,36 @@ export default function WalletPage() {
         </div>
 
         <div className="space-y-2">
-          {recentTx.map((tx) => (
-            <div key={tx._id} className="glass-card p-3 flex items-center gap-3 border-dark-800">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                tx.category === 'credit' ? 'bg-green-500/10' : 'bg-red-500/10'
-              }`}>
-                {tx.category === 'credit' ? (
-                  <TrendingUp size={16} className="text-green-600" />
-                ) : (
-                  <ArrowDownToLine size={16} className="text-red-600" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-dark-100 truncate">{tx.description}</p>
-                <p className="text-[10px] text-dark-500 font-medium">
-                  {new Date(tx.createdAt).toLocaleDateString('en-IN', {
-                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                  })}
+          {loading ? (
+            <ListSkeleton rows={5} />
+          ) : recentTx.length > 0 ? (
+            recentTx.map((tx) => (
+              <div key={tx._id} className="glass-card p-3 flex items-center gap-3 border-dark-800">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                  tx.category === 'credit' ? 'bg-green-500/10' : 'bg-red-500/10'
+                }`}>
+                  {tx.category === 'credit' ? (
+                    <TrendingUp size={16} className="text-green-600" />
+                  ) : (
+                    <ArrowDownToLine size={16} className="text-red-600" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-dark-100 truncate">{tx.description}</p>
+                  <p className="text-[10px] text-dark-500 font-medium">
+                    {new Date(tx.createdAt).toLocaleDateString('en-IN', {
+                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </p>
+                </div>
+                <p className={`text-sm font-mono font-bold ${
+                  tx.category === 'credit' ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {tx.category === 'credit' ? '+' : '-'}₹{tx.amount?.toFixed(2)}
                 </p>
               </div>
-              <p className={`text-sm font-mono font-bold ${
-                tx.category === 'credit' ? 'text-green-600' : 'text-red-600'
-              }`}>
-                {tx.category === 'credit' ? '+' : '-'}₹{tx.amount?.toFixed(2)}
-              </p>
-            </div>
-          ))}
-          {recentTx.length === 0 && (
+            ))
+          ) : (
             <div className="glass-card p-6 text-center">
               <p className="text-dark-400 text-sm">No transactions yet</p>
             </div>

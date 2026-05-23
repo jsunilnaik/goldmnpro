@@ -18,6 +18,7 @@ import {
   Calendar,
   BarChart3,
 } from 'lucide-react';
+import { CardSkeleton, ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function DashboardPage() {
   const { user, wallet } = useAuth();
@@ -216,7 +217,9 @@ export default function DashboardPage() {
           </Link>
         </div>
 
-        {user?.currentPlan ? (
+        {loading ? (
+          <CardSkeleton />
+        ) : user?.currentPlan ? (
           <div className="glass-card p-4 border border-gold-500/30">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -294,7 +297,9 @@ export default function DashboardPage() {
         </div>
 
         <div className="space-y-2">
-          {recentTx.length > 0 ? (
+          {loading ? (
+            <ListSkeleton rows={3} />
+          ) : recentTx.length > 0 ? (
             recentTx.map((tx) => (
               <div key={tx._id} className="glass-card p-3 flex items-center gap-3 border border-dark-800">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${

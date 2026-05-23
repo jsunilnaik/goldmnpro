@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Check,
 } from 'lucide-react';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminPlansPage() {
   const [plans, setPlans] = useState([]);
@@ -154,7 +155,14 @@ export default function AdminPlansPage() {
 
       {/* Plans Grid */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {plans.map((plan) => (
+        {loading ? (
+          <>
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+            <CardSkeleton />
+          </>
+        ) : plans.map((plan) => (
           <motion.div
             key={plan._id}
             initial={{ opacity: 0, y: 20 }}

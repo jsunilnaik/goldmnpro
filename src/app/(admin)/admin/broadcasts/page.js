@@ -24,6 +24,7 @@ import {
 import toast from 'react-hot-toast';
 import { getAllStates, getCitiesForState } from '@/lib/india-cities';
 import { getEmbedUrl } from '@/lib/utils';
+import { CardSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminBroadcastsPage() {
   const [broadcasts, setBroadcasts] = useState([]);
@@ -180,9 +181,11 @@ export default function AdminBroadcastsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <AnimatePresence mode="popLayout">
           {loading ? (
-            [...Array(3)].map((_, i) => (
-              <div key={i} className="h-48 bg-white border border-dark-900/10 rounded-[2rem] animate-pulse" />
-            ))
+            <>
+              <CardSkeleton />
+              <CardSkeleton />
+              <CardSkeleton />
+            </>
           ) : broadcasts.length === 0 ? (
             <div className="col-span-full py-20 text-center">
               <Megaphone size={48} className="mx-auto text-dark-800 mb-4 opacity-20" />

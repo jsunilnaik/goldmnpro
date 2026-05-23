@@ -18,6 +18,7 @@ import {
   Copy,
   ExternalLink,
 } from 'lucide-react';
+import { ListSkeleton } from '@/components/ui/Skeleton';
 
 export default function AdminWithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState([]);
@@ -252,12 +253,7 @@ export default function AdminWithdrawalsPage() {
       {/* Withdrawals List */}
       <div className="space-y-3">
         {loading ? (
-          [...Array(3)].map((_, i) => (
-            <div key={i} className="glass-card p-6 animate-pulse border-dark-900/10 shadow-sm">
-              <div className="h-6 bg-slate-100 rounded-xl w-32 mb-3" />
-              <div className="h-4 bg-slate-100 rounded-xl w-48" />
-            </div>
-          ))
+          <ListSkeleton rows={5} />
         ) : withdrawals.length > 0 ? (
           withdrawals.map((wd) => (
             <motion.div

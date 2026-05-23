@@ -3,9 +3,19 @@ import connectDB from '@/lib/mongodb';
 import User from '@/models/User';
 import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
+import rateLimit from '@/lib/rate-limit';
 
 export async function POST(request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || 'unknown';
+    const limitResult = rateLimit(`login_${ip}`, 5, 60000); // 5 attempts per minute
+    if (!limitResult.success) {
+      return NextResponse.json(
+        { message: `Too many login attempts. Try again in ${limitResult.retryAfter} seconds.` },
+        { status: 429 }
+      );
+    }
+
     await connectDB();
     const { email, password } = await request.json();
 
